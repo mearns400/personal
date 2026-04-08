@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>admin / andrew mearns</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0d0d;
+      --bg2: #131313;
+      --bg3: #181818;
+      --border: rgba(255,255,255,0.07);
+      --border2: rgba(255,255,255,0.12);
+      --text: rgba(255,255,255,0.75);
+      --text-dim: rgba(255,255,255,0.3);
+      --text-faint: rgba(255,255,255,0.15);
+      --accent: rgba(255,255,255,0.85);
+      --green: rgba(100,220,100,0.85);
+      --red: rgba(255,90,90,0.85);
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'JetBrains Mono', 'Courier New', monospace;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    /* ─── GATE ─── */
+    #gate {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      gap: 1rem;
+    }
+    #gate-label {
+      font-size: 10px;
+      color: var(--text-dim);
+      letter-spacing: 0.12em;
+    }
+    #gate-input {
+      background: var(--bg2);
+      border: 1px solid var(--border2);
+      color: var(--accent);
+      font-family: inherit;
+      font-size: 13px;
+      padding: 0.6rem 1rem;
+      width: 240px;
+      outline: none;
+      text-align: center;
+      letter-spacing: 0.15em;
+    }
+    #gate-input:focus { border-color: rgba(255,255,255,0.25); }
+    #gate-btn {
+      background: none;
+      border: 1px solid var(--border2);
+      color: var(--text-dim);
+      font-family: inherit;
+      font-size: 11px;
+      padding: 0.45rem 1.5rem;
+      cursor: pointer;
+      letter-spacing: 0.1em;
+    }
+    #gate-btn:hover { border-color: rgba(255,255,255,0.25); color: var(--text); }
+    #gate-err { font-size: 10px; color: var(--red); display: none; }
+
+    /* ─── LAYOUT ─── */
+    #admin {
+      display: none;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    #topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.7rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    #topbar-left { font-size: 11px; color: var(--text-dim); letter-spacing: 0.08em; }
+    #topbar-right { display: flex; gap: 1.25rem; align-items: center; }
+    .topbar-link {
+      font-size: 10px;
+      color: var(--text-faint);
+      text-decoration: none;
+      letter-spacing: 0.06em;
+    }
+    .topbar-link:hover { color: var(--text-dim); }
+
+    #main {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ─── SIDEBAR ─── */
+    #sidebar {
+      width: 260px;
+      flex-shrink: 0;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    #sidebar-top {
+      padding: 0.85rem 1rem;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    #new-node-btn {
+      width: 100%;
+      background: none;
+      border: 1px solid var(--border2);
+      color: var(--text-dim);
+      font-family: inherit;
+      font-size: 11px;
+      padding: 0.5rem;
+      cursor: pointer;
+      letter-spacing: 0.06em;
+    }
+    #new-node-btn:hover { border-color: rgba(255,255,255,0.2); color: var(--text); }
+
+    #tree-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0.5rem 0;
+    }
+    #tree-list::-webkit-scrollbar { width: 3px; }
+    #tree-list::-webkit-scrollbar-thumb { background: var(--border); }
+
+    .tree-item {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.35rem 1rem;
+      cursor: pointer;
+      border-left: 2px solid transparent;
+      transition: background 0.12s;
+    }
+    .tree-item:hover { background: rgba(255,255,255,0.02); }
+    .tree-item.selected {
+      background: rgba(255,255,255,0.04);
+      border-left-color: rgba(255,255,255,0.2);
+    }
+    .tree-item-label {
+      flex: 1;
+      font-size: 11px;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .tree-item-type {
+      font-size: 8px;
+      color: var(--text-faint);
+      letter-spacing: 0.06em;
+      flex-shrink: 0;
+    }
+    .tree-item-lock {
+      font-size: 9px;
+      flex-shrink: 0;
+    }
+
+    /* ─── SETUP SECTION ─── */
+    #setup-section {
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    #setup-toggle {
+      width: 100%;
+      background: none;
+      border: none;
+      color: var(--text-faint);
+      font-family: inherit;
+      font-size: 9px;
+      padding: 0.6rem 1rem;
+      cursor: pointer;
+      text-align: left;
+      letter-spacing: 0.08em;
+    }
+    #setup-toggle:hover { color: var(--text-dim); }
+    #setup-content {
+      display: none;
+      padding: 0.75rem 1rem 1rem;
+    }
+    #setup-content.open { display: block; }
+    .setup-label {
+      font-size: 9px;
+      color: var(--text-faint);
+      letter-spacing: 0.1em;
+      margin-bottom: 0.4rem;
+    }
+    .setup-code {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      padding: 0.6rem;
+      font-size: 9px;
+      color: var(--text-dim);
+      white-space: pre;
+      overflow-x: auto;
+      cursor: text;
+      line-height: 1.6;
+      margin-bottom: 0.75rem;
+    }
+    .setup-copy-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-faint);
+      font-family: inherit;
+      font-size: 9px;
+      padding: 0.25rem 0.5rem;
+      cursor: pointer;
+      margin-top: 0.25rem;
+    }
+    .setup-copy-btn:hover { color: var(--text-dim); }
+
+    /* ─── EDITOR ─── */
+    #editor {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem 2rem;
+    }
+    #editor::-webkit-scrollbar { width: 3px; }
+    #editor::-webkit-scrollbar-thumb { background: var(--border); }
+
+    #editor-placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: var(--text-faint);
+      font-size: 11px;
+      letter-spacing: 0.06em;
+    }
+
+    #editor-form { display: none; max-width: 640px; }
+
+    .form-row {
+      display: flex;
+      gap: 1rem;
+    }
+    .field {
+      margin-bottom: 1.1rem;
+      flex: 1;
+    }
+    .field label {
+      display: block;
+      font-size: 9px;
+      color: var(--text-faint);
+      letter-spacing: 0.12em;
+      margin-bottom: 0.35rem;
+    }
+    .field input[type="text"],
+    .field input[type="number"],
+    .field select,
+    .field textarea {
+      width: 100%;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 11px;
+      padding: 0.5rem 0.65rem;
+      outline: none;
+      resize: vertical;
+    }
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus { border-color: var(--border2); }
+    .field input[readonly] { color: var(--text-dim); }
+    .field select option { background: #1a1a1a; }
+
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1.1rem;
+    }
+    .checkbox-row input[type="checkbox"] { cursor: pointer; accent-color: rgba(255,255,255,0.6); }
+    .checkbox-row label { font-size: 10px; color: var(--text-dim); cursor: pointer; }
+
+    .field textarea { min-height: 80px; }
+    #f-raw { min-height: 130px; font-size: 11px; line-height: 1.6; }
+    #f-summary { min-height: 100px; line-height: 1.6; }
+
+    /* ─── BUTTONS ─── */
+    .btn {
+      background: none;
+      border: 1px solid var(--border2);
+      color: var(--text-dim);
+      font-family: inherit;
+      font-size: 11px;
+      padding: 0.5rem 1.1rem;
+      cursor: pointer;
+      letter-spacing: 0.06em;
+      transition: all 0.12s;
+    }
+    .btn:hover { border-color: rgba(255,255,255,0.25); color: var(--text); }
+    .btn:disabled { opacity: 0.35; cursor: default; }
+
+    .btn-ai {
+      width: 100%;
+      margin-bottom: 1.25rem;
+      padding: 0.65rem;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+    }
+
+    .btn-primary { border-color: rgba(255,255,255,0.2); color: var(--accent); }
+    .btn-primary:hover { border-color: rgba(255,255,255,0.4); }
+
+    .btn-danger { border-color: rgba(255,60,60,0.25); color: rgba(255,100,100,0.7); }
+    .btn-danger:hover { border-color: rgba(255,60,60,0.5); color: rgba(255,120,120,0.9); }
+
+    #action-btns {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 0.5rem;
+      align-items: center;
+    }
+
+    /* ─── DIVIDERS ─── */
+    .section-divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 1.4rem 0;
+    }
+
+    /* ─── AI PREVIEW ─── */
+    #ai-preview { display: none; }
+    .preview-header {
+      font-size: 9px;
+      color: var(--text-faint);
+      letter-spacing: 0.12em;
+      margin-bottom: 1rem;
+      padding-top: 0.5rem;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ─── SUGGESTED CHILDREN ─── */
+    #suggested-children { margin-top: 1rem; }
+    .suggest-header {
+      font-size: 9px;
+      color: var(--text-faint);
+      letter-spacing: 0.12em;
+      margin-bottom: 0.6rem;
+    }
+    .suggested-child {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border);
+      margin-bottom: 0.4rem;
+      background: var(--bg2);
+    }
+    .child-info { flex: 1; }
+    .child-label { font-size: 11px; color: var(--text); display: block; }
+    .child-sub { font-size: 9px; color: var(--text-dim); }
+    .add-child-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-faint);
+      font-family: inherit;
+      font-size: 9px;
+      padding: 0.3rem 0.6rem;
+      cursor: pointer;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+    .add-child-btn:hover { border-color: var(--border2); color: var(--text-dim); }
+
+    /* ─── STATUS ─── */
+    #status-msg {
+      font-size: 10px;
+      min-height: 1.2rem;
+      margin-left: 0.5rem;
+      transition: color 0.2s;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── GATE ── -->
+<div id="gate">
+  <div id="gate-label">admin / andrew mearns</div>
+  <input type="password" id="gate-input" placeholder="enter admin secret" autocomplete="off" />
+  <button class="btn" id="gate-btn">enter</button>
+  <div id="gate-err">wrong secret</div>
+</div>
+
+<!-- ── ADMIN ── -->
+<div id="admin">
+
+  <div id="topbar">
+    <div id="topbar-left">admin / andrew mearns</div>
+    <div id="topbar-right">
+      <a href="/" target="_blank" class="topbar-link">preview site →</a>
+      <span class="topbar-link" style="cursor:pointer" onclick="logout()">sign out</span>
+    </div>
+  </div>
+
+  <div id="main">
+
+    <!-- ── SIDEBAR ── -->
+    <div id="sidebar">
+      <div id="sidebar-top">
+        <button id="new-node-btn" onclick="newNode()">+ new node</button>
+      </div>
+      <div id="tree-list"></div>
+
+      <!-- Setup section -->
+      <div id="setup-section">
+        <button id="setup-toggle" onclick="toggleSetup()">⚙ setup guide</button>
+        <div id="setup-content">
+          <div class="setup-label">1 · supabase sql (run once)</div>
+          <div class="setup-code" id="sql-block">drop table if exists nodes cascade;
+
+create table nodes (
+  id          text primary key,
+  parent_id   text references nodes(id)
+              on delete cascade,
+  label       text not null,
+  sub         text,
+  type        text not null default 'leaf'
+              check (type in
+              ('root','branch','job','leaf')),
+  sort_order  int default 0,
+  is_locked   boolean default false,
+  raw_content text,
+  ai_summary  text,
+  created_at  timestamptz default now(),
+  updated_at  timestamptz default now()
+);
+
+alter table nodes enable row level security;
+
+create policy "Public read" on nodes
+  for select using (true);
+
+-- Insert root node
+insert into nodes
+  (id, parent_id, label, sub, type)
+values
+  ('root', null, 'andrew mearns',
+   'ai engineer · charlottesville, va',
+   'root');</div>
+          <button class="setup-copy-btn" onclick="copySQL()">copy sql</button>
+
+          <br><br>
+          <div class="setup-label">2 · vercel env vars</div>
+          <div class="setup-code">ANTHROPIC_API_KEY   = sk-ant-...
+SUPABASE_URL        = https://...supabase.co
+SUPABASE_SERVICE_KEY = eyJ... (service_role)
+ADMIN_SECRET        = your-chosen-password</div>
+          <div style="font-size:9px;color:var(--text-faint);margin-top:0.4rem;">
+            service_role key → supabase dashboard<br>
+            → project settings → api → service_role
+          </div>
+        </div>
+      </div>
+    </div><!-- /sidebar -->
+
+    <!-- ── EDITOR ── -->
+    <div id="editor">
+      <div id="editor-placeholder">select a node or create a new one</div>
+
+      <div id="editor-form">
+
+        <div class="form-row">
+          <div class="field" style="flex:1.2">
+            <label>node id (slug)</label>
+            <input type="text" id="f-id" placeholder="e.g. dynamo-rag" autocomplete="off" />
+          </div>
+          <div class="field" style="flex:2">
+            <label>parent node</label>
+            <select id="f-parent"></select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="field">
+            <label>type</label>
+            <select id="f-type">
+              <option value="branch">branch — major category</option>
+              <option value="job">job — role / company / project</option>
+              <option value="leaf" selected>leaf — specific achievement</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>sort order (lower = first)</label>
+            <input type="number" id="f-sort" value="0" min="0" />
+          </div>
+        </div>
+
+        <div class="checkbox-row">
+          <input type="checkbox" id="f-locked" />
+          <label for="f-locked">locked — visitor must unlock via chat to see this node</label>
+        </div>
+
+        <hr class="section-divider" />
+
+        <div class="field">
+          <label>raw content — drop your notes, accomplishments, anything</label>
+          <textarea id="f-raw" placeholder="Paste raw notes here. Don't overthink it — job description, bullet points, metrics, anecdotes, whatever you have. AI turns this into the node label, subtitle, chat summary, and suggested children."></textarea>
+        </div>
+
+        <button class="btn btn-ai" id="ai-process-btn" onclick="processWithAI()">
+          ✨ let ai handle the rest
+        </button>
+
+        <!-- AI Preview — shown after processing -->
+        <div id="ai-preview">
+          <div class="preview-header">ai suggestion — edit before saving</div>
+
+          <div class="form-row">
+            <div class="field" style="flex:1.2">
+              <label>label (display name)</label>
+              <input type="text" id="f-label" placeholder="short node title" />
+            </div>
+            <div class="field" style="flex:2">
+              <label>subtitle</label>
+              <input type="text" id="f-sub" placeholder="metric or descriptor" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label>ai chat summary (what the chatbot knows about this node)</label>
+            <textarea id="f-summary" placeholder="AI-generated context for the chat panel..."></textarea>
+          </div>
+
+          <div id="suggested-children"></div>
+        </div>
+
+        <hr class="section-divider" />
+
+        <div id="action-btns">
+          <button class="btn btn-primary" id="save-btn" onclick="saveNode()">save node</button>
+          <button class="btn btn-danger" id="delete-btn" onclick="deleteNode()" style="display:none">delete</button>
+          <span id="status-msg"></span>
+        </div>
+
+      </div><!-- /editor-form -->
+    </div><!-- /editor -->
+
+  </div><!-- /main -->
+</div><!-- /admin -->
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   SUPABASE (reads only via anon key)
+   ═══════════════════════════════════════════════════════════ */
+const SUPABASE_URL = 'https://kfkitfhrcbaheeensyou.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtma2l0ZmhyY2JhaGVlZW5zeW91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMzOTcwNDcsImV4cCI6MjA2ODk3MzA0N30._6vnfY2wqrXe001VsVSC8m5Z4A3e2RWESjw8dRXyRkk';
+
+/* ═══════════════════════════════════════════════════════════
+   STATE
+   ═══════════════════════════════════════════════════════════ */
+let adminSecret    = '';
+let allNodes       = [];
+let selectedNodeId = null;
+
+/* ═══════════════════════════════════════════════════════════
+   GATE
+   ═══════════════════════════════════════════════════════════ */
+function init() {
+  const stored = sessionStorage.getItem('adminSecret');
+  if (stored) {
+    adminSecret = stored;
+    showAdmin();
+    return;
+  }
+
+  document.getElementById('gate-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') attemptLogin();
+  });
+  document.getElementById('gate-btn').addEventListener('click', attemptLogin);
+}
+
+async function attemptLogin() {
+  const secret = document.getElementById('gate-input').value.trim();
+  if (!secret) return;
+
+  // Verify by making a cheap test call to /api/save-node with the secret
+  // (We ping process-node since it also checks auth and we can pass tiny content)
+  const res = await fetch('/api/process-node', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ rawContent: 'test', adminSecret: secret })
+  });
+
+  // 401 means wrong secret; anything else (including 400 for short content) is a valid auth
+  if (res.status === 401) {
+    document.getElementById('gate-err').style.display = 'block';
+    document.getElementById('gate-input').value = '';
+    return;
+  }
+
+  adminSecret = secret;
+  sessionStorage.setItem('adminSecret', secret);
+  document.getElementById('gate-err').style.display = 'none';
+  showAdmin();
+}
+
+function logout() {
+  sessionStorage.removeItem('adminSecret');
+  location.reload();
+}
+
+async function showAdmin() {
+  document.getElementById('gate').style.display  = 'none';
+  document.getElementById('admin').style.display = 'flex';
+  await loadNodes();
+}
+
+/* ═══════════════════════════════════════════════════════════
+   LOAD & RENDER TREE
+   ═══════════════════════════════════════════════════════════ */
+async function loadNodes() {
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/nodes?order=sort_order.asc`,
+    { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
+  );
+  allNodes = res.ok ? await res.json() : [];
+  renderTreeList();
+  refreshParentDropdown();
+}
+
+function buildFlatTree(nodes) {
+  const map = {};
+  nodes.forEach(n => { map[n.id] = { ...n, children: [] }; });
+  nodes.forEach(n => {
+    if (n.parent_id && map[n.parent_id]) {
+      map[n.parent_id].children.push(map[n.id]);
+    }
+  });
+  return map['root'] || null;
+}
+
+function renderTreeList() {
+  const list = document.getElementById('tree-list');
+  list.innerHTML = '';
+
+  const root = buildFlatTree(allNodes);
+  if (!root) {
+    list.innerHTML = '<div style="padding:1rem;font-size:10px;color:var(--text-faint)">no nodes — run setup sql first</div>';
+    return;
+  }
+
+  function renderItem(node, depth) {
+    const el = document.createElement('div');
+    el.className = `tree-item${selectedNodeId === node.id ? ' selected' : ''}`;
+    el.style.paddingLeft = `${depth * 14 + 12}px`;
+    el.innerHTML = `
+      <span class="tree-item-label">${node.label || node.id}</span>
+      <span class="tree-item-type">${node.type}</span>
+      ${node.is_locked ? '<span class="tree-item-lock">🔒</span>' : ''}
+    `;
+    el.addEventListener('click', () => selectNode(node.id));
+    list.appendChild(el);
+
+    node.children
+      .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+      .forEach(c => renderItem(c, depth + 1));
+  }
+
+  renderItem(root, 0);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   EDITOR
+   ═══════════════════════════════════════════════════════════ */
+function selectNode(id) {
+  selectedNodeId = id;
+  renderTreeList();
+
+  const node = allNodes.find(n => n.id === id);
+  if (!node) return;
+  loadIntoEditor(node);
+}
+
+function loadIntoEditor(node) {
+  document.getElementById('editor-placeholder').style.display = 'none';
+  document.getElementById('editor-form').style.display = 'block';
+
+  document.getElementById('f-id').value       = node.id;
+  document.getElementById('f-id').readOnly    = true; // Can't rename PK
+  document.getElementById('f-parent').value   = node.parent_id || '';
+  document.getElementById('f-type').value     = node.type || 'leaf';
+  document.getElementById('f-sort').value     = node.sort_order || 0;
+  document.getElementById('f-locked').checked = !!node.is_locked;
+  document.getElementById('f-label').value    = node.label || '';
+  document.getElementById('f-sub').value      = node.sub || '';
+  document.getElementById('f-raw').value      = node.raw_content || '';
+  document.getElementById('f-summary').value  = node.ai_summary || '';
+
+  // Show AI preview section if we already have label data
+  document.getElementById('ai-preview').style.display = node.label ? 'block' : 'none';
+  document.getElementById('suggested-children').innerHTML = '';
+
+  // Root node can't be deleted
+  document.getElementById('delete-btn').style.display = node.id === 'root' ? 'none' : 'block';
+  clearStatus();
+}
+
+function newNode() {
+  selectedNodeId = null;
+  renderTreeList();
+
+  document.getElementById('editor-placeholder').style.display = 'none';
+  document.getElementById('editor-form').style.display = 'block';
+
+  document.getElementById('f-id').value       = '';
+  document.getElementById('f-id').readOnly    = false;
+  document.getElementById('f-parent').value   = 'root';
+  document.getElementById('f-type').value     = 'leaf';
+  document.getElementById('f-sort').value     = 0;
+  document.getElementById('f-locked').checked = false;
+  document.getElementById('f-label').value    = '';
+  document.getElementById('f-sub').value      = '';
+  document.getElementById('f-raw').value      = '';
+  document.getElementById('f-summary').value  = '';
+
+  document.getElementById('ai-preview').style.display    = 'none';
+  document.getElementById('suggested-children').innerHTML = '';
+  document.getElementById('delete-btn').style.display     = 'none';
+  clearStatus();
+
+  document.getElementById('f-raw').focus();
+}
+
+function refreshParentDropdown() {
+  const sel   = document.getElementById('f-parent');
+  const cur   = sel.value;
+  sel.innerHTML = '<option value="">— no parent (root level) —</option>';
+
+  allNodes.forEach(n => {
+    const opt = document.createElement('option');
+    opt.value       = n.id;
+    opt.textContent = `${n.label || n.id} (${n.type})`;
+    sel.appendChild(opt);
+  });
+
+  sel.value = cur || 'root';
+}
+
+/* ═══════════════════════════════════════════════════════════
+   AI PROCESSING
+   ═══════════════════════════════════════════════════════════ */
+async function processWithAI() {
+  const rawContent = document.getElementById('f-raw').value.trim();
+  if (rawContent.length < 8) {
+    showStatus('add more content first', true);
+    return;
+  }
+
+  const parentId    = document.getElementById('f-parent').value;
+  const parentNode  = allNodes.find(n => n.id === parentId);
+  const parentLabel = parentNode ? parentNode.label : '';
+
+  const btn = document.getElementById('ai-process-btn');
+  btn.textContent = '···';
+  btn.disabled    = true;
+
+  try {
+    const res  = await fetch('/api/process-node', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rawContent, parentLabel, adminSecret })
+    });
+    const data = await res.json();
+
+    if (data.error) throw new Error(data.error);
+
+    // Populate fields from AI response
+    const idField = document.getElementById('f-id');
+    if (!idField.value || idField.value.trim() === '') {
+      idField.value = data.suggested_id || '';
+    }
+    document.getElementById('f-label').value   = data.label   || '';
+    document.getElementById('f-sub').value     = data.sub     || '';
+    document.getElementById('f-type').value    = data.type    || 'leaf';
+    document.getElementById('f-summary').value = data.ai_summary || '';
+    document.getElementById('ai-preview').style.display = 'block';
+
+    // Suggested children
+    const currentId = document.getElementById('f-id').value.trim();
+    if (data.suggested_children && data.suggested_children.length > 0) {
+      renderSuggestedChildren(data.suggested_children, currentId);
+    } else {
+      document.getElementById('suggested-children').innerHTML = '';
+    }
+
+    showStatus('ai processed ✓');
+  } catch (err) {
+    showStatus(`ai error: ${err.message}`, true);
+  }
+
+  btn.textContent = '✨ let ai handle the rest';
+  btn.disabled    = false;
+}
+
+function renderSuggestedChildren(children, parentId) {
+  const container = document.getElementById('suggested-children');
+  container.innerHTML = '<div class="suggest-header">suggested children — click to add</div>';
+
+  children.forEach(child => {
+    const el = document.createElement('div');
+    el.className = 'suggested-child';
+    el.innerHTML = `
+      <div class="child-info">
+        <span class="child-label">${child.label || ''}</span>
+        ${child.sub ? `<span class="child-sub">${child.sub}</span>` : ''}
+      </div>
+      <button class="add-child-btn">+ add</button>
+    `;
+
+    el.querySelector('.add-child-btn').addEventListener('click', async (e) => {
+      const resolvedParentId = document.getElementById('f-id').value.trim() || parentId;
+      if (!resolvedParentId) {
+        showStatus('save the parent node first, then add children', true);
+        return;
+      }
+
+      const childNode = {
+        id:         child.suggested_id || child.label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+        parent_id:  resolvedParentId,
+        label:      child.label,
+        sub:        child.sub || null,
+        type:       child.type || 'leaf',
+        sort_order: 0,
+        is_locked:  false
+      };
+
+      e.target.textContent = '···';
+      e.target.disabled    = true;
+
+      const res = await fetch('/api/save-node', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ node: childNode, adminSecret })
+      });
+
+      if (res.ok) {
+        e.target.textContent = '✓ saved';
+        e.target.style.color = 'var(--green)';
+        await loadNodes();
+      } else {
+        const err = await res.json().catch(() => ({}));
+        e.target.textContent = '✗ failed';
+        e.target.disabled    = false;
+        showStatus(`error: ${err.error || 'unknown'}`, true);
+      }
+    });
+
+    container.appendChild(el);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SAVE
+   ═══════════════════════════════════════════════════════════ */
+async function saveNode() {
+  const id    = document.getElementById('f-id').value.trim();
+  const label = document.getElementById('f-label').value.trim();
+
+  if (!id)    { showStatus('node id is required', true); return; }
+  if (!label) { showStatus('label is required — run ai first or fill in manually', true); return; }
+
+  const node = {
+    id,
+    parent_id:   document.getElementById('f-parent').value || null,
+    label,
+    sub:         document.getElementById('f-sub').value.trim()     || null,
+    type:        document.getElementById('f-type').value,
+    sort_order:  parseInt(document.getElementById('f-sort').value) || 0,
+    is_locked:   document.getElementById('f-locked').checked,
+    raw_content: document.getElementById('f-raw').value.trim()     || null,
+    ai_summary:  document.getElementById('f-summary').value.trim() || null
+  };
+
+  const btn = document.getElementById('save-btn');
+  btn.textContent = '···';
+  btn.disabled    = true;
+
+  const res = await fetch('/api/save-node', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ node, adminSecret })
+  });
+
+  btn.textContent = 'save node';
+  btn.disabled    = false;
+
+  if (res.ok) {
+    showStatus('saved ✓');
+    selectedNodeId = id;
+    document.getElementById('f-id').readOnly = true; // Lock ID after first save
+    document.getElementById('delete-btn').style.display = id === 'root' ? 'none' : 'block';
+    await loadNodes();
+  } else {
+    const err = await res.json().catch(() => ({}));
+    showStatus(`error: ${err.error || 'save failed'}`, true);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   DELETE
+   ═══════════════════════════════════════════════════════════ */
+async function deleteNode() {
+  const id = document.getElementById('f-id').value.trim();
+  if (!id || id === 'root') return;
+
+  const node = allNodes.find(n => n.id === id);
+  const hasChildren = allNodes.some(n => n.parent_id === id);
+  const confirmMsg = hasChildren
+    ? `delete "${id}" and all its children? this cannot be undone.`
+    : `delete "${id}"?`;
+
+  if (!confirm(confirmMsg)) return;
+
+  const res = await fetch('/api/delete-node', {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ nodeId: id, adminSecret })
+  });
+
+  if (res.ok) {
+    selectedNodeId = null;
+    document.getElementById('editor-form').style.display        = 'none';
+    document.getElementById('editor-placeholder').style.display = 'flex';
+    await loadNodes();
+  } else {
+    const err = await res.json().catch(() => ({}));
+    showStatus(`error: ${err.error || 'delete failed'}`, true);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   UTILS
+   ═══════════════════════════════════════════════════════════ */
+function showStatus(msg, isError = false) {
+  const el = document.getElementById('status-msg');
+  el.textContent = msg;
+  el.style.color = isError ? 'var(--red)' : 'var(--green)';
+  if (!isError) setTimeout(() => { if (el.textContent === msg) el.textContent = ''; }, 3000);
+}
+function clearStatus() {
+  document.getElementById('status-msg').textContent = '';
+}
+
+function toggleSetup() {
+  document.getElementById('setup-content').classList.toggle('open');
+}
+
+function copySQL() {
+  const text = document.getElementById('sql-block').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = event.target;
+    btn.textContent = 'copied ✓';
+    setTimeout(() => { btn.textContent = 'copy sql'; }, 2000);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   BOOT
+   ═══════════════════════════════════════════════════════════ */
+init();
+</script>
+</body>
+</html>

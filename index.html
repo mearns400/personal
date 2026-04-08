@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>andrew mearns</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      background: #0d0d0d;
+      color: rgba(255,255,255,0.75);
+      font-family: 'JetBrains Mono', 'Courier New', monospace;
+      font-size: 13px;
+      line-height: 1;
+    }
+
+    #wrap {
+      overflow-x: auto;
+      overflow-y: auto;
+      min-height: 100vh;
+      padding: 4rem 3rem 7rem;
+      display: flex;
+      justify-content: center;
+      transition: padding-right 0.25s ease;
+    }
+    #wrap.chat-open {
+      padding-right: calc(3rem + 380px);
+    }
+
+    #tree {
+      position: relative;
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: fit-content;
+    }
+
+    svg#conn {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      overflow: visible;
+    }
+
+    .nc {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .siblings {
+      display: flex;
+      gap: 1.25rem;
+      align-items: flex-start;
+      justify-content: center;
+    }
+
+    .vgap { height: 3.25rem; }
+
+    /* ─── NODE BOX ─── */
+    .node {
+      border: 1px solid rgba(255,255,255,0.11);
+      padding: 0.8rem 1.15rem;
+      min-width: 148px;
+      text-align: center;
+      transition: border-color 0.18s ease, background 0.18s ease, opacity 0.3s ease;
+      user-select: none;
+      position: relative;
+    }
+
+    .node[data-type="root"] {
+      border-color: rgba(255,255,255,0.28);
+      min-width: 220px;
+      padding: 1.1rem 2rem;
+    }
+    .node[data-type="branch"] { border-color: rgba(255,255,255,0.16); }
+    .node[data-type="job"]    { border-color: rgba(255,255,255,0.1); }
+    .node[data-type="leaf"]   { border-color: rgba(255,255,255,0.07); opacity: 0.6; }
+
+    .node.clickable { cursor: pointer; }
+    .node.clickable:hover {
+      border-color: rgba(255,255,255,0.38);
+      background: rgba(255,255,255,0.025);
+    }
+    .node.expanded {
+      border-color: rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.02);
+    }
+
+    /* ─── TEXT ─── */
+    .n-label {
+      font-size: 13px;
+      color: rgba(255,255,255,0.85);
+      line-height: 1.35;
+    }
+    .node[data-type="root"]   .n-label { font-size: 15px; }
+    .node[data-type="branch"] .n-label { font-size: 13px; }
+    .node[data-type="job"]    .n-label { font-size: 12px; }
+    .node[data-type="leaf"]   .n-label { font-size: 11px; color: rgba(255,255,255,0.7); }
+
+    .n-sub {
+      font-size: 10px;
+      color: rgba(255,255,255,0.28);
+      margin-top: 5px;
+      line-height: 1.45;
+    }
+    .n-ind {
+      font-size: 9px;
+      color: rgba(255,255,255,0.18);
+      margin-top: 6px;
+      letter-spacing: 0.05em;
+      transition: color 0.15s;
+    }
+    .node.expanded .n-ind { color: rgba(255,255,255,0.3); }
+
+    /* ─── LOCKED NODES ─── */
+    .node.locked {
+      opacity: 0.22;
+      cursor: pointer;
+      border-style: dashed;
+      border-color: rgba(255,255,255,0.08) !important;
+    }
+    .node.locked:hover {
+      opacity: 0.4;
+      border-color: rgba(255,255,255,0.18) !important;
+    }
+    .node.locked .n-label,
+    .node.locked .n-sub {
+      filter: blur(4px);
+      user-select: none;
+      pointer-events: none;
+    }
+    .node.locked .lock-hint {
+      display: block;
+    }
+    .lock-hint {
+      display: none;
+      font-size: 8px;
+      color: rgba(255,255,255,0.45);
+      margin-top: 5px;
+      letter-spacing: 0.12em;
+      filter: none;
+    }
+    /* Unlocking animation */
+    .node.unlocking .n-label,
+    .node.unlocking .n-sub {
+      animation: unblur 0.6s ease forwards;
+    }
+    @keyframes unblur {
+      from { filter: blur(4px); opacity: 0; }
+      to   { filter: blur(0px); opacity: 1; }
+    }
+
+    /* ─── CHILDREN PANEL ─── */
+    .children-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .children-wrap.hidden { display: none; }
+
+    /* ─── ANIMATIONS ─── */
+    @keyframes nodeIn {
+      from { opacity: 0; transform: translateY(-7px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .node.anim { animation: nodeIn 0.22s ease both; }
+
+    /* ─── CHAT PANEL ─── */
+    #chat-panel {
+      position: fixed;
+      top: 0;
+      right: -400px;
+      width: 370px;
+      height: 100vh;
+      background: #111;
+      border-left: 1px solid rgba(255,255,255,0.07);
+      display: flex;
+      flex-direction: column;
+      transition: right 0.25s ease;
+      z-index: 100;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    #chat-panel.open { right: 0; }
+
+    #chat-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 1.2rem 1.4rem 1rem;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      flex-shrink: 0;
+    }
+    #chat-node-info { flex: 1; }
+    #chat-node-label {
+      font-size: 12px;
+      color: rgba(255,255,255,0.7);
+      display: block;
+    }
+    #chat-node-sub {
+      font-size: 9px;
+      color: rgba(255,255,255,0.25);
+      margin-top: 3px;
+      display: block;
+    }
+    #chat-close {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.2);
+      font-size: 16px;
+      cursor: pointer;
+      font-family: inherit;
+      padding: 0 0 0 1rem;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+    #chat-close:hover { color: rgba(255,255,255,0.5); }
+
+    #chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.25rem 1.4rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+    #chat-messages::-webkit-scrollbar { width: 3px; }
+    #chat-messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); }
+
+    .chat-msg {
+      font-size: 11px;
+      line-height: 1.6;
+      max-width: 90%;
+      animation: nodeIn 0.18s ease both;
+    }
+    .chat-msg.user {
+      align-self: flex-end;
+      color: rgba(255,255,255,0.55);
+      text-align: right;
+    }
+    .chat-msg.assistant {
+      align-self: flex-start;
+      color: rgba(255,255,255,0.85);
+    }
+    .chat-msg.typing {
+      color: rgba(255,255,255,0.2);
+      font-style: normal;
+      letter-spacing: 0.2em;
+    }
+
+    #chat-input-area {
+      display: flex;
+      gap: 0;
+      padding: 1rem 1.4rem;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      flex-shrink: 0;
+    }
+    #chat-input {
+      flex: 1;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-right: none;
+      color: rgba(255,255,255,0.8);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      padding: 0.55rem 0.75rem;
+      outline: none;
+    }
+    #chat-input:focus { border-color: rgba(255,255,255,0.18); }
+    #chat-input:disabled { opacity: 0.4; }
+    #chat-send {
+      background: none;
+      border: 1px solid rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.35);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      padding: 0.55rem 0.9rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    #chat-send:hover:not(:disabled) {
+      border-color: rgba(255,255,255,0.25);
+      color: rgba(255,255,255,0.7);
+    }
+    #chat-send:disabled { opacity: 0.3; cursor: default; }
+
+    /* ─── FOOTER ─── */
+    #footer {
+      position: fixed;
+      bottom: 2rem;
+      left: 0; right: 0;
+      text-align: center;
+      font-size: 10px;
+      color: rgba(255,255,255,0.15);
+      pointer-events: none;
+      transition: right 0.25s ease;
+    }
+    #footer a {
+      color: rgba(255,255,255,0.25);
+      text-decoration: none;
+      pointer-events: all;
+    }
+    #footer a:hover { color: rgba(255,255,255,0.5); }
+
+    /* ─── LOADING / EMPTY ─── */
+    #state-msg {
+      color: rgba(255,255,255,0.2);
+      font-size: 11px;
+      margin-top: 3rem;
+      text-align: center;
+      letter-spacing: 0.05em;
+    }
+  </style>
+</head>
+<body>
+
+<div id="wrap">
+  <div id="tree">
+    <svg id="conn"></svg>
+  </div>
+</div>
+
+<!-- Chat Panel -->
+<div id="chat-panel">
+  <div id="chat-header">
+    <div id="chat-node-info">
+      <span id="chat-node-label"></span>
+      <span id="chat-node-sub"></span>
+    </div>
+    <button id="chat-close">×</button>
+  </div>
+  <div id="chat-messages"></div>
+  <div id="chat-input-area">
+    <input type="text" id="chat-input" placeholder="ask something..." autocomplete="off" />
+    <button id="chat-send">→</button>
+  </div>
+</div>
+
+<div id="footer">
+  <a href="mailto:mearns400@gmail.com">mearns400@gmail.com</a>
+  &nbsp;·&nbsp;
+  <a href="https://linkedin.com/in/andrewmearns" target="_blank">linkedin</a>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   SUPABASE (anon key is intentionally public — reads only)
+   ═══════════════════════════════════════════════════════════ */
+const SUPABASE_URL = 'https://kfkitfhrcbaheeensyou.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtma2l0ZmhyY2JhaGVlZW5zeW91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMzOTcwNDcsImV4cCI6MjA2ODk3MzA0N30._6vnfY2wqrXe001VsVSC8m5Z4A3e2RWESjw8dRXyRkk';
+
+const sbGet = (table, query) =>
+  fetch(`${SUPABASE_URL}/rest/v1/${table}?${query}`, {
+    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+  }).then(r => r.ok ? r.json() : []).catch(() => []);
+
+/* ═══════════════════════════════════════════════════════════
+   STATE
+   ═══════════════════════════════════════════════════════════ */
+const nodeEls  = {};   // id → .node DOM element
+const conns    = [];   // [{from, to}]
+const allNodes = {};   // id → node data
+
+let currentNodeId  = null;
+let chatMessages   = [];
+let chatInFlight   = false;
+
+/* ═══════════════════════════════════════════════════════════
+   TREE: build nested structure from flat Supabase rows
+   ═══════════════════════════════════════════════════════════ */
+function buildTreeFromFlat(rows) {
+  rows.forEach(n => { allNodes[n.id] = { ...n, children: [] }; });
+
+  rows.forEach(n => {
+    if (n.parent_id && allNodes[n.parent_id]) {
+      allNodes[n.parent_id].children.push(allNodes[n.id]);
+    }
+  });
+
+  // Sort children by sort_order ascending
+  const sort = node => {
+    node.children.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+    node.children.forEach(sort);
+  };
+
+  const root = allNodes['root'];
+  if (root) sort(root);
+  return root;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   BUILD DOM
+   ═══════════════════════════════════════════════════════════ */
+function buildNode(data, parentNodeEl) {
+  const nc = document.createElement('div');
+  nc.className = 'nc';
+
+  const box = document.createElement('div');
+  box.className    = 'node';
+  box.dataset.id   = data.id;
+  box.dataset.type = data.type;
+  nodeEls[data.id] = box;
+
+  const lbl = document.createElement('div');
+  lbl.className   = 'n-label';
+  lbl.textContent = data.label;
+  box.appendChild(lbl);
+
+  if (data.sub) {
+    const sub = document.createElement('div');
+    sub.className   = 'n-sub';
+    sub.textContent = data.sub;
+    box.appendChild(sub);
+  }
+
+  // ── LOCKED NODE ──
+  if (data.is_locked) {
+    box.classList.add('locked', 'clickable');
+    const hint = document.createElement('div');
+    hint.className   = 'lock-hint';
+    hint.textContent = 'click to discover';
+    box.appendChild(hint);
+    box.addEventListener('click', () => openChat(data));
+    nc.appendChild(box);
+    if (parentNodeEl) conns.push({ from: parentNodeEl, to: box });
+    return nc;
+  }
+
+  const hasKids = Array.isArray(data.children) && data.children.length > 0;
+
+  if (hasKids) {
+    box.classList.add('clickable');
+
+    const ind = document.createElement('div');
+    ind.className   = 'n-ind';
+    ind.textContent = '+ explore';
+    box.appendChild(ind);
+
+    const cw = document.createElement('div');
+    cw.className = 'children-wrap hidden';
+
+    const vg = document.createElement('div');
+    vg.className = 'vgap';
+    cw.appendChild(vg);
+
+    const row = document.createElement('div');
+    row.className = 'siblings';
+    cw.appendChild(row);
+
+    data.children.forEach(child => row.appendChild(buildNode(child, box)));
+
+    nc.appendChild(box);
+    nc.appendChild(cw);
+
+    box.addEventListener('click', () => toggle(data, box, cw));
+  } else {
+    // Leaf — click opens chat
+    box.classList.add('clickable');
+    box.addEventListener('click', () => openChat(data));
+    nc.appendChild(box);
+  }
+
+  if (parentNodeEl) conns.push({ from: parentNodeEl, to: box });
+  return nc;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TOGGLE
+   ═══════════════════════════════════════════════════════════ */
+function toggle(data, box, cw) {
+  box.classList.contains('expanded') ? collapseAll(data, box, cw) : expand(data, box, cw);
+}
+
+function expand(data, box, cw) {
+  box.classList.add('expanded');
+  const ind = box.querySelector('.n-ind');
+  if (ind) ind.textContent = '− close';
+
+  cw.classList.remove('hidden');
+
+  const kids = cw.querySelectorAll(':scope > .siblings > .nc > .node');
+  kids.forEach((n, i) => {
+    n.classList.add('anim');
+    n.style.animationDelay = `${i * 40}ms`;
+    n.addEventListener('animationend', () => {
+      n.classList.remove('anim');
+      n.style.animationDelay = '';
+    }, { once: true });
+  });
+
+  raf2(drawLines);
+}
+
+function collapseAll(data, box, cw) {
+  if (data.children) {
+    data.children.forEach(child => {
+      const cb = nodeEls[child.id];
+      if (cb && cb.classList.contains('expanded')) {
+        const ccw = cb.closest('.nc')?.querySelector(':scope > .children-wrap');
+        if (ccw) collapseAll(child, cb, ccw);
+      }
+    });
+  }
+  box.classList.remove('expanded');
+  const ind = box.querySelector('.n-ind');
+  if (ind) ind.textContent = '+ explore';
+  cw.classList.add('hidden');
+  raf2(drawLines);
+}
+
+const raf2 = fn => requestAnimationFrame(() => requestAnimationFrame(fn));
+
+/* ═══════════════════════════════════════════════════════════
+   SVG LINES
+   ═══════════════════════════════════════════════════════════ */
+function isVisible(el) {
+  let p = el.parentElement;
+  while (p) {
+    if (p.id === 'tree') return true;
+    if (p.classList.contains('children-wrap') && p.classList.contains('hidden')) return false;
+    p = p.parentElement;
+  }
+  return true;
+}
+
+function drawLines() {
+  const svg  = document.getElementById('conn');
+  const tree = document.getElementById('tree');
+  const tr   = tree.getBoundingClientRect();
+
+  svg.setAttribute('height', tree.scrollHeight);
+  svg.innerHTML = '';
+
+  for (const { from, to } of conns) {
+    if (!isVisible(from) || !isVisible(to)) continue;
+
+    const fr  = from.getBoundingClientRect();
+    const tor = to.getBoundingClientRect();
+
+    const x1 = fr.left  - tr.left + fr.width  / 2;
+    const y1 = fr.bottom - tr.top;
+    const x2 = tor.left - tr.left + tor.width  / 2;
+    const y2 = tor.top  - tr.top;
+
+    if (y2 <= y1 + 2) continue;
+
+    const cy = y1 + (y2 - y1) * 0.5;
+
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d',            `M ${x1} ${y1} C ${x1} ${cy}, ${x2} ${cy}, ${x2} ${y2}`);
+    path.setAttribute('stroke',       'rgba(255,255,255,0.12)');
+    path.setAttribute('stroke-width', '1');
+    path.setAttribute('fill',         'none');
+    svg.appendChild(path);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CHAT
+   ═══════════════════════════════════════════════════════════ */
+function openChat(data) {
+  currentNodeId = data.id;
+  chatMessages  = [];
+
+  document.getElementById('chat-node-label').textContent = data.label;
+  document.getElementById('chat-node-sub').textContent   = data.sub || '';
+  document.getElementById('chat-messages').innerHTML     = '';
+
+  const intro = data.is_locked
+    ? `this one's locked. tell me what you're looking for and i'll open it up.`
+    : `what do you want to know about ${data.label}?`;
+
+  addChatMsg('assistant', intro);
+
+  document.getElementById('chat-panel').classList.add('open');
+  document.getElementById('wrap').classList.add('chat-open');
+  document.getElementById('chat-input').focus();
+  raf2(drawLines);
+}
+
+function closeChatPanel() {
+  document.getElementById('chat-panel').classList.remove('open');
+  document.getElementById('wrap').classList.remove('chat-open');
+  raf2(drawLines);
+}
+
+function addChatMsg(role, text, isTyping = false) {
+  const msgs = document.getElementById('chat-messages');
+  const el   = document.createElement('div');
+  el.className = `chat-msg ${role}${isTyping ? ' typing' : ''}`;
+  el.textContent = text;
+  msgs.appendChild(el);
+  msgs.scrollTop = msgs.scrollHeight;
+  return el;
+}
+
+async function sendChatMessage() {
+  if (chatInFlight) return;
+  const input = document.getElementById('chat-input');
+  const msg   = input.value.trim();
+  if (!msg) return;
+
+  input.value = '';
+  chatInFlight = true;
+  input.disabled = true;
+  document.getElementById('chat-send').disabled = true;
+
+  addChatMsg('user', msg);
+  chatMessages.push({ role: 'user', content: msg });
+
+  const typingEl = addChatMsg('assistant', '···', true);
+
+  try {
+    const res  = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nodeId: currentNodeId, messages: chatMessages })
+    });
+    const data = await res.json();
+    typingEl.remove();
+
+    const reply = data.message || 'something went sideways. try again.';
+    addChatMsg('assistant', reply);
+    chatMessages.push({ role: 'assistant', content: reply });
+
+    // Unlock node after first AI response (client-side, session-persisted)
+    const nodeEl = nodeEls[currentNodeId];
+    if (nodeEl && nodeEl.classList.contains('locked')) {
+      nodeEl.classList.remove('locked');
+      nodeEl.classList.add('unlocking');
+      setTimeout(() => nodeEl.classList.remove('unlocking'), 700);
+
+      // Persist unlock in sessionStorage so refresh keeps it
+      const unlocked = JSON.parse(sessionStorage.getItem('unlocked') || '[]');
+      if (!unlocked.includes(currentNodeId)) {
+        unlocked.push(currentNodeId);
+        sessionStorage.setItem('unlocked', JSON.stringify(unlocked));
+      }
+    }
+  } catch (err) {
+    typingEl.remove();
+    addChatMsg('assistant', 'network issue. try again.');
+  }
+
+  chatInFlight = false;
+  input.disabled = false;
+  document.getElementById('chat-send').disabled = false;
+  input.focus();
+}
+
+document.getElementById('chat-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') sendChatMessage();
+});
+document.getElementById('chat-send').addEventListener('click', sendChatMessage);
+document.getElementById('chat-close').addEventListener('click', closeChatPanel);
+
+/* ═══════════════════════════════════════════════════════════
+   INIT
+   ═══════════════════════════════════════════════════════════ */
+async function init() {
+  const tree = document.getElementById('tree');
+
+  // Show loading state
+  const stateMsg = document.createElement('div');
+  stateMsg.id = 'state-msg';
+  stateMsg.textContent = '···';
+  tree.appendChild(stateMsg);
+
+  // Fetch all nodes from Supabase
+  const rows = await sbGet('nodes', 'order=sort_order.asc');
+
+  stateMsg.remove();
+
+  if (!rows || rows.length === 0) {
+    const empty = document.createElement('div');
+    empty.id = 'state-msg';
+    empty.innerHTML = 'nothing here yet<br><span style="font-size:9px;opacity:0.5">visit <a href="/admin" style="color:rgba(255,255,255,0.4);">/admin</a> to get started</span>';
+    tree.appendChild(empty);
+    return;
+  }
+
+  // Apply any session-unlocked nodes
+  const sessionUnlocked = JSON.parse(sessionStorage.getItem('unlocked') || '[]');
+  const processedRows = rows.map(n => ({
+    ...n,
+    is_locked: n.is_locked && !sessionUnlocked.includes(n.id)
+  }));
+
+  // Build nested tree
+  const treeData = buildTreeFromFlat(processedRows);
+  if (!treeData) return;
+
+  const rootNc = buildNode(treeData, null);
+  tree.appendChild(rootNc);
+
+  // Root node: always expanded, not clickable
+  const rootBox = nodeEls['root'];
+  const rootCw  = rootNc.querySelector(':scope > .children-wrap');
+  if (rootBox) {
+    rootBox.classList.remove('clickable');
+    rootBox.style.cursor = 'default';
+    const rootInd = rootBox.querySelector('.n-ind');
+    if (rootInd) rootInd.remove();
+    rootBox.classList.add('expanded');
+  }
+  if (rootCw) rootCw.classList.remove('hidden');
+
+  raf2(drawLines);
+  window.addEventListener('resize', drawLines);
+}
+
+init();
+</script>
+</body>
+</html>
