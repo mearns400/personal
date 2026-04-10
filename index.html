@@ -5,717 +5,960 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>andrew mearns</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+    :root {
+      --bg:       #03080f;
+      --canvas:   #04090e;
+      --line:     #00b8e6;
+      --text:     rgba(200,220,255,0.85);
+      --dim:      rgba(120,150,200,0.45);
+      --bright:   #ddeeff;
+    }
+
     html, body {
       height: 100%;
-      background: #0d0d0d;
-      color: rgba(255,255,255,0.75);
-      font-family: 'JetBrains Mono', 'Courier New', monospace;
-      font-size: 13px;
-      line-height: 1;
-    }
-
-    #wrap {
-      overflow-x: auto;
-      overflow-y: auto;
-      min-height: 100vh;
-      padding: 4rem 3rem 7rem;
-      display: flex;
-      justify-content: center;
-      transition: padding-right 0.25s ease;
-    }
-    #wrap.chat-open {
-      padding-right: calc(3rem + 380px);
-    }
-
-    #tree {
-      position: relative;
-      display: inline-flex;
-      flex-direction: column;
-      align-items: center;
-      min-width: fit-content;
-    }
-
-    svg#conn {
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      overflow: visible;
-    }
-
-    .nc {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    .siblings {
-      display: flex;
-      gap: 1.25rem;
-      align-items: flex-start;
-      justify-content: center;
-    }
-
-    .vgap { height: 3.25rem; }
-
-    /* ─── NODE BOX ─── */
-    .node {
-      border: 1px solid rgba(255,255,255,0.11);
-      padding: 0.8rem 1.15rem;
-      min-width: 148px;
-      text-align: center;
-      transition: border-color 0.18s ease, background 0.18s ease, opacity 0.3s ease;
-      user-select: none;
-      position: relative;
-    }
-
-    .node[data-type="root"] {
-      border-color: rgba(255,255,255,0.28);
-      min-width: 220px;
-      padding: 1.1rem 2rem;
-    }
-    .node[data-type="branch"] { border-color: rgba(255,255,255,0.16); }
-    .node[data-type="job"]    { border-color: rgba(255,255,255,0.1); }
-    .node[data-type="leaf"]   { border-color: rgba(255,255,255,0.07); opacity: 0.6; }
-
-    .node.clickable { cursor: pointer; }
-    .node.clickable:hover {
-      border-color: rgba(255,255,255,0.38);
-      background: rgba(255,255,255,0.025);
-    }
-    .node.expanded {
-      border-color: rgba(255,255,255,0.3);
-      background: rgba(255,255,255,0.02);
-    }
-
-    /* ─── TEXT ─── */
-    .n-label {
-      font-size: 13px;
-      color: rgba(255,255,255,0.85);
-      line-height: 1.35;
-    }
-    .node[data-type="root"]   .n-label { font-size: 15px; }
-    .node[data-type="branch"] .n-label { font-size: 13px; }
-    .node[data-type="job"]    .n-label { font-size: 12px; }
-    .node[data-type="leaf"]   .n-label { font-size: 11px; color: rgba(255,255,255,0.7); }
-
-    .n-sub {
-      font-size: 10px;
-      color: rgba(255,255,255,0.28);
-      margin-top: 5px;
-      line-height: 1.45;
-    }
-    .n-ind {
-      font-size: 9px;
-      color: rgba(255,255,255,0.18);
-      margin-top: 6px;
-      letter-spacing: 0.05em;
-      transition: color 0.15s;
-    }
-    .node.expanded .n-ind { color: rgba(255,255,255,0.3); }
-
-    /* ─── LOCKED NODES ─── */
-    .node.locked {
-      opacity: 0.22;
-      cursor: pointer;
-      border-style: dashed;
-      border-color: rgba(255,255,255,0.08) !important;
-    }
-    .node.locked:hover {
-      opacity: 0.4;
-      border-color: rgba(255,255,255,0.18) !important;
-    }
-    .node.locked .n-label,
-    .node.locked .n-sub {
-      filter: blur(4px);
-      user-select: none;
-      pointer-events: none;
-    }
-    .node.locked .lock-hint {
-      display: block;
-    }
-    .lock-hint {
-      display: none;
-      font-size: 8px;
-      color: rgba(255,255,255,0.45);
-      margin-top: 5px;
-      letter-spacing: 0.12em;
-      filter: none;
-    }
-    /* Unlocking animation */
-    .node.unlocking .n-label,
-    .node.unlocking .n-sub {
-      animation: unblur 0.6s ease forwards;
-    }
-    @keyframes unblur {
-      from { filter: blur(4px); opacity: 0; }
-      to   { filter: blur(0px); opacity: 1; }
-    }
-
-    /* ─── CHILDREN PANEL ─── */
-    .children-wrap {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    .children-wrap.hidden { display: none; }
-
-    /* ─── ANIMATIONS ─── */
-    @keyframes nodeIn {
-      from { opacity: 0; transform: translateY(-7px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    .node.anim { animation: nodeIn 0.22s ease both; }
-
-    /* ─── CHAT PANEL ─── */
-    #chat-panel {
-      position: fixed;
-      top: 0;
-      right: -400px;
-      width: 370px;
-      height: 100vh;
-      background: #111;
-      border-left: 1px solid rgba(255,255,255,0.07);
-      display: flex;
-      flex-direction: column;
-      transition: right 0.25s ease;
-      z-index: 100;
+      background: var(--bg);
+      color: var(--text);
       font-family: 'JetBrains Mono', monospace;
-    }
-    #chat-panel.open { right: 0; }
-
-    #chat-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      padding: 1.2rem 1.4rem 1rem;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-      flex-shrink: 0;
-    }
-    #chat-node-info { flex: 1; }
-    #chat-node-label {
       font-size: 12px;
-      color: rgba(255,255,255,0.7);
-      display: block;
-    }
-    #chat-node-sub {
-      font-size: 9px;
-      color: rgba(255,255,255,0.25);
-      margin-top: 3px;
-      display: block;
-    }
-    #chat-close {
-      background: none;
-      border: none;
-      color: rgba(255,255,255,0.2);
-      font-size: 16px;
-      cursor: pointer;
-      font-family: inherit;
-      padding: 0 0 0 1rem;
-      line-height: 1;
-      flex-shrink: 0;
-    }
-    #chat-close:hover { color: rgba(255,255,255,0.5); }
-
-    #chat-messages {
-      flex: 1;
-      overflow-y: auto;
-      padding: 1.25rem 1.4rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.85rem;
-    }
-    #chat-messages::-webkit-scrollbar { width: 3px; }
-    #chat-messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); }
-
-    .chat-msg {
-      font-size: 11px;
-      line-height: 1.6;
-      max-width: 90%;
-      animation: nodeIn 0.18s ease both;
-    }
-    .chat-msg.user {
-      align-self: flex-end;
-      color: rgba(255,255,255,0.55);
-      text-align: right;
-    }
-    .chat-msg.assistant {
-      align-self: flex-start;
-      color: rgba(255,255,255,0.85);
-    }
-    .chat-msg.typing {
-      color: rgba(255,255,255,0.2);
-      font-style: normal;
-      letter-spacing: 0.2em;
+      overflow: hidden;
     }
 
-    #chat-input-area {
-      display: flex;
-      gap: 0;
-      padding: 1rem 1.4rem;
-      border-top: 1px solid rgba(255,255,255,0.06);
-      flex-shrink: 0;
+    /* ── HEADER ── */
+    #hdr {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      padding: 18px 36px 14px;
+      display: flex; align-items: baseline; gap: 16px;
+      background: linear-gradient(180deg, rgba(3,8,15,1) 50%, transparent);
     }
-    #chat-input {
-      flex: 1;
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-right: none;
-      color: rgba(255,255,255,0.8);
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 11px;
-      padding: 0.55rem 0.75rem;
-      outline: none;
+    .h-name {
+      font-family: 'Exo 2', sans-serif;
+      font-size: 19px; font-weight: 700;
+      letter-spacing: 0.05em; color: var(--bright);
     }
-    #chat-input:focus { border-color: rgba(255,255,255,0.18); }
-    #chat-input:disabled { opacity: 0.4; }
-    #chat-send {
-      background: none;
-      border: 1px solid rgba(255,255,255,0.08);
-      color: rgba(255,255,255,0.35);
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 13px;
-      padding: 0.55rem 0.9rem;
-      cursor: pointer;
-      transition: all 0.15s;
+    .h-name em { color: var(--line); font-style: normal; }
+    .h-tag {
+      font-family: 'Exo 2', sans-serif;
+      font-size: 10px; font-weight: 300;
+      color: var(--dim); letter-spacing: 0.12em;
     }
-    #chat-send:hover:not(:disabled) {
-      border-color: rgba(255,255,255,0.25);
-      color: rgba(255,255,255,0.7);
+    .h-nav { margin-left: auto; display: flex; gap: 18px; }
+    .h-nav a {
+      font-family: 'Exo 2', sans-serif;
+      font-size: 10px; color: var(--dim);
+      text-decoration: none; letter-spacing: 0.1em;
+      transition: color 0.2s;
     }
-    #chat-send:disabled { opacity: 0.3; cursor: default; }
+    .h-nav a:hover { color: var(--line); }
 
-    /* ─── FOOTER ─── */
-    #footer {
+    /* ── LEGEND ── */
+    #legend {
+      position: fixed; top: 60px; left: 0; right: 0; z-index: 99;
+      padding: 6px 36px;
+      display: flex; align-items: center; gap: 0;
+      background: rgba(3,8,15,0.88);
+      border-bottom: 1px solid rgba(0,180,230,0.06);
+    }
+    .lg { display: flex; align-items: center; gap: 6px; margin-right: 20px; }
+    .lg-swatch { width: 20px; height: 7px; border-radius: 1px; opacity: 0.7; }
+    .lg-swatch.company    { background: rgba(40, 80, 200, 0.9); }
+    .lg-swatch.role       { background: rgba(0, 140, 230, 0.9); }
+    .lg-swatch.enrichment { background: rgba(0, 210, 255, 0.9); }
+    .lg-swatch.personal   { background: rgba(200, 100, 20, 0.9); }
+    .lg span {
+      font-size: 8px; color: var(--dim);
+      letter-spacing: 0.1em; text-transform: lowercase;
+    }
+
+    /* ── VIEWPORT ── */
+    #vp {
       position: fixed;
-      bottom: 2rem;
-      left: 0; right: 0;
-      text-align: center;
-      font-size: 10px;
-      color: rgba(255,255,255,0.15);
-      pointer-events: none;
-      transition: right 0.25s ease;
+      top: 90px; left: 0; right: 0; bottom: 78px;
+      overflow: hidden;
     }
-    #footer a {
-      color: rgba(255,255,255,0.25);
-      text-decoration: none;
-      pointer-events: all;
-    }
-    #footer a:hover { color: rgba(255,255,255,0.5); }
 
-    /* ─── LOADING / EMPTY ─── */
-    #state-msg {
-      color: rgba(255,255,255,0.2);
-      font-size: 11px;
-      margin-top: 3rem;
-      text-align: center;
-      letter-spacing: 0.05em;
+    /* ── CANVAS ── */
+    #canvas {
+      position: absolute; inset: 0;
+      background: var(--canvas);
     }
+
+    /* ── RULER ── */
+    #ruler {
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 32px;
+      overflow: hidden;
+    }
+    .r-year {
+      position: absolute; bottom: 6px;
+      font-size: 9px; color: rgba(0,180,230,0.28);
+      letter-spacing: 0.1em;
+      transform: translateX(-50%); white-space: nowrap;
+      font-family: 'Exo 2', sans-serif; font-weight: 600;
+    }
+    .r-tick {
+      position: absolute; bottom: 0;
+      width: 1px; height: 4px;
+      background: rgba(0,180,230,0.1);
+    }
+
+    /* ── CENTER LINE ── */
+    #cline {
+      position: absolute; left: 0; right: 0; height: 1px;
+      background: rgba(0,184,230,0.35);
+      box-shadow: 0 0 8px rgba(0,184,230,0.2);
+      z-index: 5; pointer-events: none;
+    }
+
+    /* ── ZONE LABELS ── */
+    .zone-lbl {
+      position: absolute; left: 8px;
+      font-size: 7px; color: rgba(0,184,230,0.18);
+      letter-spacing: 0.16em; text-transform: uppercase;
+      pointer-events: none; z-index: 6;
+      font-family: 'Exo 2', sans-serif;
+    }
+
+    /* ── TODAY ── */
+    .today-line {
+      position: absolute; bottom: 0;
+      width: 1px; background: rgba(255,255,255,0.15);
+      z-index: 6; pointer-events: none;
+    }
+    .today-lbl {
+      position: absolute; top: 2px;
+      font-size: 7px; color: rgba(255,255,255,0.2);
+      transform: translateX(-50%); white-space: nowrap;
+      letter-spacing: 0.08em;
+    }
+
+    /* ── BARS ── */
+    #bars-wrap {
+      position: absolute; inset: 0;
+      pointer-events: none;
+    }
+    .bar {
+      position: absolute;
+      pointer-events: auto;
+      cursor: pointer;
+      border-radius: 1px;
+      transition: filter 0.12s;
+    }
+    .bar:hover { filter: brightness(1.8) saturate(1.3); z-index: 30 !important; }
+
+    /* Fixed layer colors — overlapping = additive opacity darkening */
+    .bar-company    { background: rgba(30, 70, 190, 0.38); }
+    .bar-role       { background: rgba(0, 130, 220, 0.42); }
+    .bar-enrichment { background: rgba(0, 205, 255, 0.52); }
+    .bar-personal   { background: rgba(190, 85, 10, 0.32); }
+
+    /* ── HOVER INFO PANEL ── */
+    #hover-panel {
+      position: fixed; z-index: 200;
+      width: 268px;
+      padding: 16px 18px 14px;
+      background: rgba(3, 7, 16, 0.92);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.18s;
+      /* subtle left accent line instead of full border */
+      border-left: 2px solid rgba(0,184,230,0.4);
+    }
+    #hover-panel.visible { opacity: 1; }
+
+    .hl { line-height: 1.75; word-break: break-word; }
+    .hl + .hl { margin-top: 1px; }
+    .hl-gap { margin-top: 7px; }
+
+    .hl-title { font-size: 12px; font-weight: 500; color: var(--bright); font-family: 'Exo 2', sans-serif; }
+    .hl-sub   { font-size: 10px; color: rgba(140,170,220,0.6); font-family: 'Exo 2', sans-serif; font-weight: 300; }
+    .hl-date  { font-size: 9px;  color: rgba(0,200,240,0.7); letter-spacing: 0.06em; }
+    .hl-desc  { font-size: 9px;  color: rgba(170,195,230,0.38); line-height: 1.65; }
+    .hl-cta   { font-size: 8px;  color: rgba(0,200,240,0.38); letter-spacing: 0.1em; margin-top: 10px; }
+
+    .hl-cursor {
+      display: inline-block;
+      color: rgba(0,200,240,0.7);
+      animation: blink-c 0.55s step-end infinite;
+      font-size: 11px; line-height: 1;
+      margin-left: 1px;
+    }
+    @keyframes blink-c { 0%,100%{opacity:1} 50%{opacity:0} }
+
+    /* ── SLIDER ── */
+    #slider-area {
+      position: fixed; bottom: 38px; left: 0; right: 0;
+      height: 40px; z-index: 90;
+      background: rgba(3,8,15,0.95);
+      border-top: 1px solid rgba(0,180,230,0.06);
+      display: flex; align-items: center;
+      padding: 0 36px; gap: 14px;
+      user-select: none;
+    }
+    #slider-range-lbl {
+      font-size: 8px; color: var(--dim);
+      letter-spacing: 0.08em; white-space: nowrap;
+      min-width: 150px;
+    }
+    #track-wrap {
+      flex: 1; position: relative; height: 20px;
+      display: flex; align-items: center;
+    }
+    #track {
+      position: absolute; left: 0; right: 0;
+      height: 2px; border-radius: 1px;
+      background: rgba(0,180,230,0.1);
+    }
+    .s-tick {
+      position: absolute; top: 0; bottom: 0;
+      width: 1px; background: rgba(0,180,230,0.15);
+      pointer-events: none;
+    }
+    .s-tick-lbl {
+      position: absolute; top: -13px;
+      font-size: 7px; color: rgba(0,180,230,0.3);
+      transform: translateX(-50%); white-space: nowrap;
+    }
+    #s-fill {
+      position: absolute; height: 2px;
+      background: rgba(0,180,230,0.3); border-radius: 1px;
+      pointer-events: none;
+    }
+    #s-fill-drag {
+      position: absolute; height: 20px; top: 50%;
+      transform: translateY(-50%);
+      cursor: grab; z-index: 1;
+    }
+    #s-fill-drag:active { cursor: grabbing; }
+    .s-handle {
+      position: absolute; top: 50%;
+      width: 12px; height: 12px;
+      transform: translate(-50%,-50%);
+      background: var(--bg);
+      border: 1.5px solid rgba(0,184,230,0.6);
+      border-radius: 50%; cursor: ew-resize; z-index: 2;
+      transition: box-shadow 0.12s, transform 0.1s;
+    }
+    .s-handle:hover, .s-handle.drag {
+      box-shadow: 0 0 10px rgba(0,184,230,0.5);
+      transform: translate(-50%,-50%) scale(1.2);
+    }
+    #s-reset {
+      font-size: 8px; color: var(--dim);
+      letter-spacing: 0.1em; cursor: pointer;
+      border: 1px solid rgba(0,180,230,0.15);
+      background: none; padding: 3px 10px;
+      border-radius: 2px; transition: all 0.14s;
+      white-space: nowrap;
+    }
+    #s-reset:hover { color: var(--line); border-color: rgba(0,184,230,0.4); }
+
+    /* ── CHAT PANEL ── */
+    #chat {
+      position: fixed; top: 0; right: -410px;
+      width: 390px; height: 100%;
+      background: rgba(3, 7, 16, 0.97);
+      border-left: 1px solid rgba(0,184,230,0.1);
+      backdrop-filter: blur(20px);
+      z-index: 300; display: flex; flex-direction: column;
+      transition: right 0.28s cubic-bezier(0.4,0,0.2,1);
+    }
+    #chat.open { right: 0; }
+    .ch-hdr {
+      padding: 18px 20px 14px;
+      border-bottom: 1px solid rgba(0,184,230,0.07);
+      display: flex; align-items: flex-start; gap: 10px;
+    }
+    .ch-ctx { flex: 1; }
+    .ch-ctx-type { font-size: 7px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--line); margin-bottom: 3px; }
+    .ch-ctx-name { font-family: 'Exo 2', sans-serif; font-size: 13px; font-weight: 600; color: var(--bright); line-height: 1.3; }
+    .ch-x { background: none; border: none; color: var(--dim); font-size: 15px; cursor: pointer; padding: 2px 4px; transition: color 0.14s; }
+    .ch-x:hover { color: var(--bright); }
+    #chat-msgs { flex: 1; overflow-y: auto; padding: 16px 20px; display: flex; flex-direction: column; gap: 12px; }
+    #chat-msgs::-webkit-scrollbar { width: 2px; }
+    #chat-msgs::-webkit-scrollbar-thumb { background: rgba(0,184,230,0.15); }
+    .msg { display: flex; }
+    .msg.user { flex-direction: row-reverse; }
+    .msg-b { padding: 9px 13px; border-radius: 3px; font-size: 11px; line-height: 1.6; max-width: 88%; }
+    .msg.assistant .msg-b { background: rgba(0,30,70,0.5); color: var(--text); }
+    .msg.user .msg-b { background: rgba(0,184,230,0.08); border: 1px solid rgba(0,184,230,0.18); color: var(--bright); }
+    .msg.typing .msg-b { color: var(--dim); font-style: italic; }
+    #chat-foot { padding: 14px 20px; border-top: 1px solid rgba(0,184,230,0.07); display: flex; gap: 8px; }
+    #chat-inp { flex: 1; background: rgba(0,184,230,0.03); border: 1px solid rgba(0,184,230,0.15); color: var(--bright); padding: 8px 11px; font-family: 'JetBrains Mono', monospace; font-size: 11px; resize: none; border-radius: 2px; outline: none; line-height: 1.4; transition: border-color 0.14s; }
+    #chat-inp:focus { border-color: rgba(0,184,230,0.4); }
+    #chat-send { padding: 8px 14px; background: transparent; border: 1px solid rgba(0,184,230,0.25); color: var(--line); font-family: 'JetBrains Mono', monospace; font-size: 10px; cursor: pointer; border-radius: 2px; transition: all 0.13s; letter-spacing: 0.05em; }
+    #chat-send:hover { background: rgba(0,184,230,0.08); }
+
+    /* ── FOOTER ── */
+    #footer {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      height: 38px; background: rgba(3,8,15,0.97);
+      border-top: 1px solid rgba(0,180,230,0.05);
+      display: flex; align-items: center; padding: 0 36px; gap: 20px; z-index: 100;
+    }
+    .f-link { font-size: 9px; color: var(--dim); text-decoration: none; letter-spacing: 0.1em; transition: color 0.18s; }
+    .f-link:hover { color: var(--line); }
+    .f-copy { margin-left: auto; font-size: 9px; color: rgba(80,110,160,0.25); }
+
+    /* ── LOADING ── */
+    #loading { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 500; flex-direction: column; gap: 14px; transition: opacity 0.5s; }
+    #loading.done { opacity: 0; pointer-events: none; }
+    .ld-txt { font-family: 'Exo 2', sans-serif; font-size: 11px; color: rgba(0,184,230,0.5); letter-spacing: 0.24em; animation: pulse 1.5s ease-in-out infinite; }
+    .ld-bar { width: 120px; height: 1px; background: rgba(0,184,230,0.1); position: relative; overflow: hidden; }
+    .ld-bar::after { content:''; position:absolute; top:0; left:-50%; width:50%; height:100%; background: var(--line); animation: scan 1.2s ease-in-out infinite; }
+    @keyframes scan  { 0%{left:-50%} 100%{left:110%} }
+    @keyframes pulse { 0%,100%{opacity:.35} 50%{opacity:.7} }
   </style>
 </head>
 <body>
 
-<div id="wrap">
-  <div id="tree">
-    <svg id="conn"></svg>
+<div id="loading">
+  <div class="ld-txt">loading</div>
+  <div class="ld-bar"></div>
+</div>
+
+<header id="hdr">
+  <div class="h-name">andrew <em>mearns</em></div>
+  <div class="h-tag">ai engineer &nbsp;·&nbsp; charlottesville, va</div>
+  <nav class="h-nav">
+    <a href="mailto:mearns400@gmail.com">email</a>
+    <a href="https://linkedin.com/in/andrewmearns" target="_blank">linkedin</a>
+    <a href="/admin" target="_blank">admin ↗</a>
+  </nav>
+</header>
+
+<div id="legend">
+  <div class="lg"><div class="lg-swatch company"></div><span>company</span></div>
+  <div class="lg"><div class="lg-swatch role"></div><span>role</span></div>
+  <div class="lg"><div class="lg-swatch enrichment"></div><span>achievement</span></div>
+  <div class="lg"><div class="lg-swatch personal"></div><span>personal</span></div>
+</div>
+
+<div id="vp">
+  <div id="canvas">
+    <div id="ruler"></div>
+    <div id="cline"></div>
+    <div id="bars-wrap"></div>
   </div>
 </div>
 
-<!-- Chat Panel -->
-<div id="chat-panel">
-  <div id="chat-header">
-    <div id="chat-node-info">
-      <span id="chat-node-label"></span>
-      <span id="chat-node-sub"></span>
+<div id="hover-panel"><div id="hover-content"></div></div>
+
+<!-- Slider -->
+<div id="slider-area">
+  <div id="slider-range-lbl">—</div>
+  <div id="track-wrap">
+    <div id="track">
+      <div id="s-fill"></div>
+      <div id="s-fill-drag"></div>
+      <div class="s-handle" id="h-left"></div>
+      <div class="s-handle" id="h-right"></div>
     </div>
-    <button id="chat-close">×</button>
   </div>
-  <div id="chat-messages"></div>
-  <div id="chat-input-area">
-    <input type="text" id="chat-input" placeholder="ask something..." autocomplete="off" />
-    <button id="chat-send">→</button>
+  <button id="s-reset">reset</button>
+</div>
+
+<!-- Chat panel -->
+<div id="chat">
+  <div class="ch-hdr">
+    <div class="ch-ctx">
+      <div class="ch-ctx-type" id="ch-type"></div>
+      <div class="ch-ctx-name" id="ch-name"></div>
+    </div>
+    <button class="ch-x" id="ch-close">✕</button>
+  </div>
+  <div id="chat-msgs"></div>
+  <div id="chat-foot">
+    <textarea id="chat-inp" rows="2" placeholder="ask anything…"></textarea>
+    <button id="chat-send">send</button>
   </div>
 </div>
 
-<div id="footer">
-  <a href="mailto:mearns400@gmail.com">mearns400@gmail.com</a>
-  &nbsp;·&nbsp;
-  <a href="https://linkedin.com/in/andrewmearns" target="_blank">linkedin</a>
-</div>
+<footer id="footer">
+  <a href="mailto:mearns400@gmail.com" class="f-link">mearns400@gmail.com</a>
+  <a href="https://linkedin.com/in/andrewmearns" target="_blank" class="f-link">linkedin</a>
+  <span class="f-copy">andrew mearns</span>
+</footer>
 
 <script>
-/* ═══════════════════════════════════════════════════════════
-   SUPABASE (anon key is intentionally public — reads only)
-   ═══════════════════════════════════════════════════════════ */
-const SUPABASE_URL = 'https://kfkitfhrcbaheeensyou.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtma2l0ZmhyY2JhaGVlZW5zeW91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMzOTcwNDcsImV4cCI6MjA2ODk3MzA0N30._6vnfY2wqrXe001VsVSC8m5Z4A3e2RWESjw8dRXyRkk';
+// ── CONFIG ───────────────────────────────────────────────────────────────────
+const SB_URL = 'https://kfkitfhrcbaheeensyou.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtma2l0ZmhyY2JhaGVlZW5zeW91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMzOTcwNDcsImV4cCI6MjA2ODk3MzA0N30._6vnfY2wqrXe001VsVSC8m5Z4A3e2RWESjw8dRXyRkk';
 
-const sbGet = (table, query) =>
-  fetch(`${SUPABASE_URL}/rest/v1/${table}?${query}`, {
-    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
-  }).then(r => r.ok ? r.json() : []).catch(() => []);
+// Layer heights (px) — fixed per type, no stacking
+const RULER_H      = 32;
+const COMPANY_H    = 42;
+const ROLE_H       = 30;
+const ENRICHMENT_H = 18;
+const PERSONAL_H   = 42;
+const LAYER_GAP    = 5;   // gap between layers
+const LINE_PAD     = 2;   // gap between center line and first bar
 
-/* ═══════════════════════════════════════════════════════════
-   STATE
-   ═══════════════════════════════════════════════════════════ */
-const nodeEls  = {};   // id → .node DOM element
-const conns    = [];   // [{from, to}]
-const allNodes = {};   // id → node data
+const MIN_SPAN = 0.015;
 
-let currentNodeId  = null;
-let chatMessages   = [];
-let chatInFlight   = false;
+// ── STATE ────────────────────────────────────────────────────────────────────
+let jobs = [], enrichments = [], personal = [];
+// ainfo_ tables
+let ainfoCompany = [], ainfoRole = [], ainfoAccomplishments = [], ainfoPersonal = [];
 
-/* ═══════════════════════════════════════════════════════════
-   TREE: build nested structure from flat Supabase rows
-   ═══════════════════════════════════════════════════════════ */
-function buildTreeFromFlat(rows) {
-  rows.forEach(n => { allNodes[n.id] = { ...n, children: [] }; });
+let dataFirstMs, dataTodayMs, totalMs;
+let viewMin = 0, viewMax = 1;
+let chatHistory = [], chatCtx = null;
+let typeTimer = null, hoverBarId = null;
 
-  rows.forEach(n => {
-    if (n.parent_id && allNodes[n.parent_id]) {
-      allNodes[n.parent_id].children.push(allNodes[n.id]);
-    }
+// ── HELPERS ──────────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+function mk(tag, cls) { const e = document.createElement(tag); if(cls) e.className=cls; return e; }
+
+function viewStartMs() { return dataFirstMs + viewMin * totalMs; }
+function viewEndMs()   { return dataFirstMs + viewMax * totalMs; }
+function vpW()         { return $('vp').clientWidth; }
+function ppd()         { return vpW() / ((viewEndMs() - viewStartMs()) / 86400000); }
+
+function toPx(d) {
+  if (!d) return -9999;
+  const ms = (d instanceof Date) ? d.getTime() : new Date(d).getTime();
+  return ((ms - viewStartMs()) / 86400000) * ppd();
+}
+
+function fmt(d) {
+  if (!d) return '?';
+  return new Date(d).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+}
+function fmtRange(s, e, cur) {
+  return fmt(s) + ' → ' + (cur ? 'present' : (e ? fmt(e) : '?'));
+}
+
+async function sfetch(table, qs='') {
+  const r = await fetch(`${SB_URL}/rest/v1/${encodeURIComponent(table)}?${qs}`, {
+    headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` }
   });
-
-  // Sort children by sort_order ascending
-  const sort = node => {
-    node.children.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
-    node.children.forEach(sort);
-  };
-
-  const root = allNodes['root'];
-  if (root) sort(root);
-  return root;
+  if (!r.ok) throw new Error(`${table} ${r.status}`);
+  return r.json();
 }
 
-/* ═══════════════════════════════════════════════════════════
-   BUILD DOM
-   ═══════════════════════════════════════════════════════════ */
-function buildNode(data, parentNodeEl) {
-  const nc = document.createElement('div');
-  nc.className = 'nc';
+// ── LOAD ─────────────────────────────────────────────────────────────────────
+async function loadData() {
+  const [j, e, p, ac, ar, aa, ap] = await Promise.all([
+    sfetch('1a_history',           'select=*&order=start_date.asc'),
+    sfetch('1b_enrichments',       'select=*&order=start_date.asc'),
+    sfetch('1e_personal',          'select=*&order=start_date.asc'),
+    sfetch('ainfo_company',        'select=*&order=start_date.asc').catch(() => []),
+    sfetch('ainfo_role',           'select=*&order=start_date.asc').catch(() => []),
+    sfetch('ainfo_accomplishments','select=*&order=start_date.asc').catch(() => []),
+    sfetch('ainfo_personal',       'select=*&order=start_date.asc').catch(() => []),
+  ]);
+  jobs        = j.filter(r => r.start_date);
+  enrichments = e.filter(r => r.start_date);
+  personal    = p.filter(r => r.start_date);
 
-  const box = document.createElement('div');
-  box.className    = 'node';
-  box.dataset.id   = data.id;
-  box.dataset.type = data.type;
-  nodeEls[data.id] = box;
+  ainfoCompany        = (Array.isArray(ac) ? ac : []).filter(r => r.start_date);
+  ainfoRole           = (Array.isArray(ar) ? ar : []).filter(r => r.start_date);
+  ainfoAccomplishments= (Array.isArray(aa) ? aa : []).filter(r => r.start_date);
+  ainfoPersonal       = (Array.isArray(ap) ? ap : []).filter(r => r.start_date);
 
-  const lbl = document.createElement('div');
-  lbl.className   = 'n-label';
-  lbl.textContent = data.label;
-  box.appendChild(lbl);
+  const all = [
+    ...jobs.map(r => new Date(r.start_date).getTime()),
+    ...enrichments.map(r => new Date(r.start_date).getTime()),
+    ...personal.map(r => new Date(r.start_date).getTime()),
+    ...ainfoCompany.map(r => new Date(r.start_date).getTime()),
+    ...ainfoRole.map(r => new Date(r.start_date).getTime()),
+    ...ainfoAccomplishments.map(r => new Date(r.start_date).getTime()),
+    ...ainfoPersonal.map(r => new Date(r.start_date).getTime()),
+  ].filter(n => !isNaN(n));
 
-  if (data.sub) {
-    const sub = document.createElement('div');
-    sub.className   = 'n-sub';
-    sub.textContent = data.sub;
-    box.appendChild(sub);
-  }
-
-  // ── LOCKED NODE ──
-  if (data.is_locked) {
-    box.classList.add('locked', 'clickable');
-    const hint = document.createElement('div');
-    hint.className   = 'lock-hint';
-    hint.textContent = 'click to discover';
-    box.appendChild(hint);
-    box.addEventListener('click', () => openChat(data));
-    nc.appendChild(box);
-    if (parentNodeEl) conns.push({ from: parentNodeEl, to: box });
-    return nc;
-  }
-
-  const hasKids = Array.isArray(data.children) && data.children.length > 0;
-
-  if (hasKids) {
-    box.classList.add('clickable');
-
-    const ind = document.createElement('div');
-    ind.className   = 'n-ind';
-    ind.textContent = '+ explore';
-    box.appendChild(ind);
-
-    const cw = document.createElement('div');
-    cw.className = 'children-wrap hidden';
-
-    const vg = document.createElement('div');
-    vg.className = 'vgap';
-    cw.appendChild(vg);
-
-    const row = document.createElement('div');
-    row.className = 'siblings';
-    cw.appendChild(row);
-
-    data.children.forEach(child => row.appendChild(buildNode(child, box)));
-
-    nc.appendChild(box);
-    nc.appendChild(cw);
-
-    box.addEventListener('click', () => toggle(data, box, cw));
-  } else {
-    // Leaf — click opens chat
-    box.classList.add('clickable');
-    box.addEventListener('click', () => openChat(data));
-    nc.appendChild(box);
-  }
-
-  if (parentNodeEl) conns.push({ from: parentNodeEl, to: box });
-  return nc;
+  dataFirstMs = all.length ? Math.min(...all) : Date.now() - 10*365*86400000;
+  dataTodayMs = Date.now();
+  totalMs = dataTodayMs - dataFirstMs;
+  viewMin = 0; viewMax = 1;
 }
 
-/* ═══════════════════════════════════════════════════════════
-   TOGGLE
-   ═══════════════════════════════════════════════════════════ */
-function toggle(data, box, cw) {
-  box.classList.contains('expanded') ? collapseAll(data, box, cw) : expand(data, box, cw);
+// ── RENDER ────────────────────────────────────────────────────────────────────
+function render() {
+  const vpH = $('vp').clientHeight;
+  // Center line sits at 50%
+  const cy = Math.round(vpH * 0.50);
+
+  $('cline').style.top = (RULER_H + cy) + 'px';
+
+  renderRuler(cy);
+  renderBars(cy);
+  updateSlider();
 }
 
-function expand(data, box, cw) {
-  box.classList.add('expanded');
-  const ind = box.querySelector('.n-ind');
-  if (ind) ind.textContent = '− close';
+function renderRuler(cy) {
+  const ruler  = $('ruler');
+  const canvas = $('canvas');
+  ruler.innerHTML = '';
+  canvas.querySelectorAll('.r-year,.r-tick,.today-line,.zone-lbl').forEach(e=>e.remove());
 
-  cw.classList.remove('hidden');
+  const w      = vpW();
+  const vStart = viewStartMs();
+  const vEnd   = viewEndMs();
+  const pd     = ppd();
 
-  const kids = cw.querySelectorAll(':scope > .siblings > .nc > .node');
-  kids.forEach((n, i) => {
-    n.classList.add('anim');
-    n.style.animationDelay = `${i * 40}ms`;
-    n.addEventListener('animationend', () => {
-      n.classList.remove('anim');
-      n.style.animationDelay = '';
-    }, { once: true });
-  });
+  const fy = new Date(vStart).getFullYear();
+  const ly = new Date(vEnd).getFullYear();
 
-  raf2(drawLines);
-}
+  for (let y = fy; y <= ly + 1; y++) {
+    const ms = new Date(y, 0, 1).getTime();
+    if (ms < vStart || ms > vEnd) continue;
+    const x = ((ms - vStart) / 86400000) * pd;
+    if (x < -20 || x > w + 20) continue;
 
-function collapseAll(data, box, cw) {
-  if (data.children) {
-    data.children.forEach(child => {
-      const cb = nodeEls[child.id];
-      if (cb && cb.classList.contains('expanded')) {
-        const ccw = cb.closest('.nc')?.querySelector(':scope > .children-wrap');
-        if (ccw) collapseAll(child, cb, ccw);
+    const lbl = mk('div','r-year'); lbl.style.left = x+'px'; lbl.textContent = y;
+    ruler.appendChild(lbl);
+
+    if (pd >= 0.4) {
+      for (let m = 1; m < 12; m++) {
+        const mms = new Date(y, m, 1).getTime();
+        if (mms <= vStart || mms >= vEnd) continue;
+        const mx = ((mms - vStart) / 86400000) * pd;
+        if (mx < 0 || mx > w) continue;
+        const tick = mk('div','r-tick'); tick.style.left = mx+'px';
+        ruler.appendChild(tick);
       }
-    });
+    }
   }
-  box.classList.remove('expanded');
-  const ind = box.querySelector('.n-ind');
-  if (ind) ind.textContent = '+ explore';
-  cw.classList.add('hidden');
-  raf2(drawLines);
-}
 
-const raf2 = fn => requestAnimationFrame(() => requestAnimationFrame(fn));
-
-/* ═══════════════════════════════════════════════════════════
-   SVG LINES
-   ═══════════════════════════════════════════════════════════ */
-function isVisible(el) {
-  let p = el.parentElement;
-  while (p) {
-    if (p.id === 'tree') return true;
-    if (p.classList.contains('children-wrap') && p.classList.contains('hidden')) return false;
-    p = p.parentElement;
+  // Today marker (runs from ruler bottom to canvas bottom)
+  const todayX = ((Date.now() - vStart) / 86400000) * pd;
+  if (todayX >= 0 && todayX <= w) {
+    const tl = mk('div','today-line');
+    tl.style.left = todayX + 'px';
+    tl.style.top  = RULER_H + 'px';
+    const tlbl = mk('div','today-lbl'); tlbl.textContent = 'today';
+    tl.appendChild(tlbl);
+    canvas.appendChild(tl);
   }
-  return true;
-}
 
-function drawLines() {
-  const svg  = document.getElementById('conn');
-  const tree = document.getElementById('tree');
-  const tr   = tree.getBoundingClientRect();
+  // Zone labels — fixed left, indicate each layer
+  const companyTop   = RULER_H + cy - LINE_PAD - COMPANY_H;
+  const roleTop      = companyTop - LAYER_GAP - ROLE_H;
+  const enrichTop    = roleTop - LAYER_GAP - ENRICHMENT_H;
+  const personalTop  = RULER_H + cy + LINE_PAD;
 
-  svg.setAttribute('height', tree.scrollHeight);
-  svg.innerHTML = '';
-
-  for (const { from, to } of conns) {
-    if (!isVisible(from) || !isVisible(to)) continue;
-
-    const fr  = from.getBoundingClientRect();
-    const tor = to.getBoundingClientRect();
-
-    const x1 = fr.left  - tr.left + fr.width  / 2;
-    const y1 = fr.bottom - tr.top;
-    const x2 = tor.left - tr.left + tor.width  / 2;
-    const y2 = tor.top  - tr.top;
-
-    if (y2 <= y1 + 2) continue;
-
-    const cy = y1 + (y2 - y1) * 0.5;
-
-    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    path.setAttribute('d',            `M ${x1} ${y1} C ${x1} ${cy}, ${x2} ${cy}, ${x2} ${y2}`);
-    path.setAttribute('stroke',       'rgba(255,255,255,0.12)');
-    path.setAttribute('stroke-width', '1');
-    path.setAttribute('fill',         'none');
-    svg.appendChild(path);
+  function addZoneLbl(text, top, align='top') {
+    const z = mk('div','zone-lbl'); z.textContent = text;
+    z.style.top = (align==='top' ? top : top + PERSONAL_H - 10) + 'px';
+    canvas.appendChild(z);
   }
+  addZoneLbl('enrichment', enrichTop);
+  addZoneLbl('role', roleTop);
+  addZoneLbl('company', companyTop);
+  addZoneLbl('personal', personalTop);
 }
 
-/* ═══════════════════════════════════════════════════════════
-   CHAT
-   ═══════════════════════════════════════════════════════════ */
-function openChat(data) {
-  currentNodeId = data.id;
-  chatMessages  = [];
+function renderBars(cy) {
+  const wrap = $('bars-wrap');
+  wrap.innerHTML = '';
 
-  document.getElementById('chat-node-label').textContent = data.label;
-  document.getElementById('chat-node-sub').textContent   = data.sub || '';
-  document.getElementById('chat-messages').innerHTML     = '';
+  const w = vpW();
 
-  const intro = data.is_locked
-    ? `this one's locked. tell me what you're looking for and i'll open it up.`
-    : `what do you want to know about ${data.label}?`;
+  // Y positions — fixed per type, no stacking
+  const companyTop   = RULER_H + cy - LINE_PAD - COMPANY_H;
+  const roleTop      = companyTop - LAYER_GAP - ROLE_H;
+  const enrichTop    = roleTop - LAYER_GAP - ENRICHMENT_H;
+  const personalTop  = RULER_H + cy + LINE_PAD;
 
-  addChatMsg('assistant', intro);
+  // Each 1a_history record → company bar + role bar
+  jobs.forEach(j => {
+    const left  = toPx(j.start_date);
+    const right = j.is_current ? toPx(new Date()) : toPx(j.end_date || new Date());
+    const width = Math.max(right - left, 3);
+    if (left > w || left + width < 0) return;
 
-  document.getElementById('chat-panel').classList.add('open');
-  document.getElementById('wrap').classList.add('chat-open');
-  document.getElementById('chat-input').focus();
-  raf2(drawLines);
+    // Company bar
+    addBar({ type:'company', data:j }, left, width, companyTop, COMPANY_H, wrap);
+    // Role bar
+    addBar({ type:'role',    data:j }, left, width, roleTop,    ROLE_H,    wrap);
+  });
+
+  // Enrichment bars
+  enrichments.forEach(e => {
+    const left  = toPx(e.start_date);
+    const right = toPx(e.end_date || e.start_date);
+    const width = Math.max(right - left, 6);
+    if (left > w || left + width < 0) return;
+    addBar({ type:'enrichment', data:e }, left, width, enrichTop, ENRICHMENT_H, wrap);
+  });
+
+  // Personal bars
+  personal.forEach(p => {
+    const left  = toPx(p.start_date);
+    const right = toPx(p.end_date || p.start_date);
+    const width = Math.max(right - left, 6);
+    if (left > w || left + width < 0) return;
+    addBar({ type:'personal', data:p }, left, width, personalTop, PERSONAL_H, wrap);
+  });
+
+  // ── ainfo_ bars (use per-record color, render in same layers) ────────────
+  ainfoCompany.forEach(r => {
+    const left  = toPx(r.start_date);
+    const right = toPx(r.end_date || new Date());
+    const width = Math.max(right - left, 3);
+    if (left > w || left + width < 0) return;
+    addBarColored({ type:'ainfo_company', data:r }, left, width, companyTop, COMPANY_H, wrap, r.color || '#1e46be');
+  });
+
+  ainfoRole.forEach(r => {
+    const left  = toPx(r.start_date);
+    const right = toPx(r.end_date || new Date());
+    const width = Math.max(right - left, 3);
+    if (left > w || left + width < 0) return;
+    addBarColored({ type:'ainfo_role', data:r }, left, width, roleTop, ROLE_H, wrap, r.color || '#0082dc');
+  });
+
+  ainfoAccomplishments.forEach(r => {
+    const left  = toPx(r.start_date);
+    const right = toPx(r.end_date || r.start_date);
+    const width = Math.max(right - left, 6);
+    if (left > w || left + width < 0) return;
+    addBarColored({ type:'ainfo_accomplishments', data:r }, left, width, enrichTop, ENRICHMENT_H, wrap, r.color || '#00cdff');
+  });
+
+  ainfoPersonal.forEach(r => {
+    const left  = toPx(r.start_date);
+    const right = toPx(r.end_date || r.start_date);
+    const width = Math.max(right - left, 6);
+    if (left > w || left + width < 0) return;
+    addBarColored({ type:'ainfo_personal', data:r }, left, width, personalTop, PERSONAL_H, wrap, r.color || '#c46414');
+  });
 }
 
-function closeChatPanel() {
-  document.getElementById('chat-panel').classList.remove('open');
-  document.getElementById('wrap').classList.remove('chat-open');
-  raf2(drawLines);
+function addBar(b, left, width, top, h, wrap) {
+  const div = mk('div', `bar bar-${b.type}`);
+  const cl = Math.max(0, left);
+  const cw = width - (cl - left);
+  div.style.cssText = `left:${cl}px;width:${cw}px;top:${top}px;height:${h}px;z-index:${zFor(b.type)};`;
+
+  const uid = (b.data.id || '') + b.type;
+  div.addEventListener('mouseenter', ev => showHover(b, div, uid));
+  div.addEventListener('mouseleave', () => hideHover());
+  div.addEventListener('click', ev => { ev.stopPropagation(); openChat(b); });
+
+  wrap.appendChild(div);
 }
 
-function addChatMsg(role, text, isTyping = false) {
-  const msgs = document.getElementById('chat-messages');
-  const el   = document.createElement('div');
-  el.className = `chat-msg ${role}${isTyping ? ' typing' : ''}`;
-  el.textContent = text;
-  msgs.appendChild(el);
+function addBarColored(b, left, width, top, h, wrap, hexColor) {
+  const div = mk('div', 'bar');
+  const cl  = Math.max(0, left);
+  const cw  = width - (cl - left);
+  // Parse hex → rgba with 0.45 alpha
+  const r   = parseInt(hexColor.slice(1,3),16);
+  const g   = parseInt(hexColor.slice(3,5),16);
+  const bv  = parseInt(hexColor.slice(5,7),16);
+  div.style.cssText = `left:${cl}px;width:${cw}px;top:${top}px;height:${h}px;z-index:${zFor(b.type)};background:rgba(${r},${g},${bv},0.45);`;
+
+  const uid = (b.data.id || '') + b.type;
+  div.addEventListener('mouseenter', ev => showHover(b, div, uid));
+  div.addEventListener('mouseleave', () => hideHover());
+  div.addEventListener('click', ev => { ev.stopPropagation(); openChat(b); });
+
+  wrap.appendChild(div);
+}
+
+function zFor(t) { return t==='company'||t==='ainfo_company'?10 : t==='role'||t==='ainfo_role'?11 : t==='enrichment'||t==='ainfo_accomplishments'?12 : 10; }
+
+// ── HOVER / TYPEWRITER ────────────────────────────────────────────────────────
+function buildLines(b) {
+  const d = b.data;
+  const L = (text, cls) => ({ text, cls });
+  const lines = [];
+
+  if (b.type === 'company') {
+    lines.push(L(d.company || '—', 'hl-title'));
+    if (d.location) lines.push(L(d.location, 'hl-sub'));
+    lines.push(L(fmtRange(d.start_date, d.end_date, d.is_current), 'hl-date'));
+    const desc = d.description || '';
+    if (desc) lines.push(L(desc.slice(0,110)+(desc.length>110?'…':''), 'hl-desc hl-gap'));
+    lines.push(L('click to chat →', 'hl-cta'));
+
+  } else if (b.type === 'role') {
+    lines.push(L(d.title || '—', 'hl-title'));
+    if (d.company) lines.push(L(d.company, 'hl-sub'));
+    lines.push(L(fmtRange(d.start_date, d.end_date, d.is_current), 'hl-date'));
+    const desc = d.ai_summary || d.description || '';
+    if (desc) lines.push(L(desc.slice(0,120)+(desc.length>120?'…':''), 'hl-desc hl-gap'));
+    if (d.skills) lines.push(L(d.skills.slice(0,70), 'hl-desc'));
+    lines.push(L('click to chat →', 'hl-cta'));
+
+  } else if (b.type === 'enrichment') {
+    lines.push(L(d.accomplishment_header || '—', 'hl-title'));
+    lines.push(L(fmtRange(d.start_date, d.end_date, false), 'hl-date'));
+    const desc = d.ai_summary || d.impact_summary || d.description || '';
+    if (desc) lines.push(L(desc.slice(0,120)+(desc.length>120?'…':''), 'hl-desc hl-gap'));
+    lines.push(L('click to chat →', 'hl-cta'));
+
+  } else if (b.type === 'ainfo_company') {
+    lines.push(L(d.ai_title || d.company_name || '—', 'hl-title'));
+    if (d.company_name && d.ai_title) lines.push(L(d.company_name, 'hl-sub'));
+    lines.push(L(fmtRange(d.start_date, d.end_date, false), 'hl-date'));
+    const desc = d.ai_summary || d.description || '';
+    if (desc) lines.push(L(desc.slice(0,120)+(desc.length>120?'…':''), 'hl-desc hl-gap'));
+    lines.push(L('click to chat →', 'hl-cta'));
+
+  } else if (b.type === 'ainfo_role') {
+    lines.push(L(d.ai_title || d.title || '—', 'hl-title'));
+    if (d.title && d.ai_title) lines.push(L(d.title, 'hl-sub'));
+    lines.push(L(fmtRange(d.start_date, d.end_date, false), 'hl-date'));
+    const desc = d.ai_summary || d.responsibilities || '';
+    if (desc) lines.push(L(desc.slice(0,120)+(desc.length>120?'…':''), 'hl-desc hl-gap'));
+    lines.push(L('click to chat →', 'hl-cta'));
+
+  } else if (b.type === 'ainfo_accomplishments') {
+    lines.push(L(d.ai_title || d.description || '—', 'hl-title'));
+    lines.push(L(fmtRange(d.start_date, d.end_date, false), 'hl-date'));
+    const desc = d.ai_summary || d.description || '';
+    if (desc) lines.push(L(desc.slice(0,120)+(desc.length>120?'…':''), 'hl-desc hl-gap'));
+    lines.push(L('click to chat →', 'hl-cta'));
+
+  } else if (b.type === 'ainfo_personal') {
+    lines.push(L(d.ai_title || d.description || '—', 'hl-title'));
+    lines.push(L(fmtRange(d.start_date, d.end_date, false), 'hl-date'));
+    const desc = d.ai_summary || d.description || '';
+    if (desc) lines.push(L(desc.slice(0,120)+(desc.length>120?'…':''), 'hl-desc hl-gap'));
+    lines.push(L('click to chat →', 'hl-cta'));
+
+  } else { // personal (legacy 1e_personal)
+    lines.push(L(d.ai_header || d.description || '—', 'hl-title'));
+    if (d.type) lines.push(L(d.type, 'hl-sub'));
+    lines.push(L(fmtRange(d.start_date, d.end_date, false), 'hl-date'));
+    const desc = d.ai_summary || d.description || '';
+    if (desc) lines.push(L(desc.slice(0,120)+(desc.length>120?'…':''), 'hl-desc hl-gap'));
+    lines.push(L('click to chat →', 'hl-cta'));
+  }
+
+  return lines;
+}
+
+function showHover(b, barEl, uid) {
+  hoverBarId = uid;
+  clearInterval(typeTimer);
+
+  const panel   = $('hover-panel');
+  const content = $('hover-content');
+  content.innerHTML = '';
+
+  // Position — prefer above the bar; flip below if too close to top
+  const br  = barEl.getBoundingClientRect();
+  const ph  = 190; // estimated panel height
+  const pw  = 272;
+  let py = br.top - ph - 8;
+  let px = br.left + 2;
+  if (py < 96) py = br.bottom + 8;
+  if (px + pw > window.innerWidth - 8) px = window.innerWidth - pw - 8;
+  px = Math.max(8, px);
+  py = Math.max(96, py);
+
+  panel.style.left = px + 'px';
+  panel.style.top  = py + 'px';
+  panel.classList.add('visible');
+
+  // Build line elements (pre-create all, all start empty)
+  const lines = buildLines(b);
+  const els = lines.map(l => {
+    const el = mk('div', 'hl ' + l.cls);
+    content.appendChild(el);
+    return { el, full: l.text };
+  });
+
+  // Blinking cursor span
+  const cursor = mk('span', 'hl-cursor'); cursor.textContent = '▮';
+  if (els.length) els[0].el.appendChild(cursor);
+
+  let li = 0, ci = 0;
+
+  typeTimer = setInterval(() => {
+    if (hoverBarId !== uid) { clearInterval(typeTimer); return; }
+    if (li >= els.length)   { clearInterval(typeTimer); setTimeout(() => cursor.remove(), 800); return; }
+
+    const { el, full } = els[li];
+
+    if (ci < full.length) {
+      cursor.remove();
+      el.textContent = full.slice(0, ci + 1);
+      el.appendChild(cursor);
+      ci++;
+    } else {
+      li++; ci = 0;
+      cursor.remove();
+      if (li < els.length) els[li].el.appendChild(cursor);
+    }
+  }, 18); // ~18ms per char → snappy but readable
+}
+
+function hideHover() {
+  hoverBarId = null;
+  clearInterval(typeTimer);
+  $('hover-panel').classList.remove('visible');
+  $('hover-content').innerHTML = '';
+}
+
+// ── SLIDER ────────────────────────────────────────────────────────────────────
+function updateSlider() {
+  const track = $('track');
+  const tw = track.clientWidth;
+  const lx = viewMin * tw;
+  const rx = viewMax * tw;
+
+  $('h-left').style.left  = lx + 'px';
+  $('h-right').style.left = rx + 'px';
+  $('s-fill').style.left  = lx + 'px';
+  $('s-fill').style.width = (rx - lx) + 'px';
+  $('s-fill-drag').style.left  = lx + 'px';
+  $('s-fill-drag').style.width = (rx - lx) + 'px';
+
+  // Year ticks
+  track.querySelectorAll('.s-tick,.s-tick-lbl').forEach(e => e.remove());
+  const fy = new Date(dataFirstMs).getFullYear();
+  const ly = new Date(dataTodayMs).getFullYear();
+  for (let y = fy; y <= ly + 1; y++) {
+    const ms = new Date(y, 0, 1).getTime();
+    if (ms < dataFirstMs || ms > dataTodayMs) continue;
+    const frac = (ms - dataFirstMs) / totalMs;
+    const tx = frac * tw;
+    const t = mk('div','s-tick'); t.style.left = tx+'px'; track.appendChild(t);
+    const tl = mk('div','s-tick-lbl'); tl.style.left = tx+'px'; tl.textContent = y; track.appendChild(tl);
+  }
+
+  // Range label
+  const sf = new Date(viewStartMs()).toLocaleDateString('en-US',{month:'short',year:'numeric'});
+  const se = viewMax >= 0.999 ? 'today'
+           : new Date(viewEndMs()).toLocaleDateString('en-US',{month:'short',year:'numeric'});
+  $('slider-range-lbl').textContent = sf + ' → ' + se;
+}
+
+function initSlider() {
+  let drag = null, sx, sm, sM;
+
+  function startDrag(which, e) {
+    drag = which; sx = e.clientX; sm = viewMin; sM = viewMax;
+    $('h-left').classList.toggle('drag', which==='left');
+    $('h-right').classList.toggle('drag', which==='right');
+    e.preventDefault();
+  }
+
+  $('h-left').addEventListener('mousedown',   e => startDrag('left',  e));
+  $('h-right').addEventListener('mousedown',  e => startDrag('right', e));
+  $('s-fill-drag').addEventListener('mousedown', e => startDrag('pan', e));
+
+  window.addEventListener('mousemove', e => {
+    if (!drag) return;
+    const tw = $('track').clientWidth;
+    const dx = (e.clientX - sx) / tw;
+    if (drag === 'left') {
+      viewMin = Math.max(0, Math.min(sm + dx, viewMax - MIN_SPAN));
+    } else if (drag === 'right') {
+      viewMax = Math.max(viewMin + MIN_SPAN, Math.min(1, sM + dx));
+    } else {
+      const span = sM - sm;
+      let nm = sm + dx, nM = sM + dx;
+      if (nm < 0) { nm = 0; nM = span; }
+      if (nM > 1) { nM = 1; nm = 1 - span; }
+      viewMin = nm; viewMax = nM;
+    }
+    render();
+  });
+  window.addEventListener('mouseup', () => {
+    if (!drag) return;
+    $('h-left').classList.remove('drag'); $('h-right').classList.remove('drag');
+    drag = null;
+  });
+
+  // Touch
+  $('h-left').addEventListener('touchstart',    e=>{startDrag('left',e.touches[0]);},{passive:false});
+  $('h-right').addEventListener('touchstart',   e=>{startDrag('right',e.touches[0]);},{passive:false});
+  $('s-fill-drag').addEventListener('touchstart',e=>{startDrag('pan',e.touches[0]);},{passive:false});
+  window.addEventListener('touchmove', e=>{
+    if(!drag) return;
+    const tw=$('track').clientWidth, dx=(e.touches[0].clientX-sx)/tw;
+    if(drag==='left') viewMin=Math.max(0,Math.min(sm+dx,viewMax-MIN_SPAN));
+    else if(drag==='right') viewMax=Math.max(viewMin+MIN_SPAN,Math.min(1,sM+dx));
+    else{const sp=sM-sm;let nm=sm+dx,nM=sM+dx;if(nm<0){nm=0;nM=sp;}if(nM>1){nM=1;nm=1-sp;}viewMin=nm;viewMax=nM;}
+    render();
+  },{passive:true});
+  window.addEventListener('touchend', ()=>{ drag=null; });
+
+  $('s-reset').addEventListener('click', () => { viewMin=0; viewMax=1; render(); });
+}
+
+// ── CHAT ─────────────────────────────────────────────────────────────────────
+function openChat(b) {
+  chatHistory = []; chatCtx = b;
+  const d = b.data;
+  const typeLabel = b.type==='company'||b.type==='ainfo_company' ? 'company'
+    : b.type==='role'||b.type==='ainfo_role' ? 'work history'
+    : b.type==='enrichment'||b.type==='ainfo_accomplishments' ? 'achievement'
+    : 'personal';
+  const nameParts = [];
+  if      (b.type === 'company')              nameParts.push(d.company);
+  else if (b.type === 'role')                 { nameParts.push(d.title); if(d.company) nameParts.push('@'+d.company); }
+  else if (b.type === 'enrichment')           nameParts.push(d.accomplishment_header);
+  else if (b.type === 'ainfo_company')        nameParts.push(d.ai_title || d.company_name);
+  else if (b.type === 'ainfo_role')           nameParts.push(d.ai_title || d.title);
+  else if (b.type === 'ainfo_accomplishments')nameParts.push(d.ai_title || d.description);
+  else if (b.type === 'ainfo_personal')       nameParts.push(d.ai_title || d.description);
+  else                                        nameParts.push(d.ai_header || d.description);
+
+  $('ch-type').textContent = typeLabel;
+  $('ch-name').textContent = nameParts.filter(Boolean).join(' ');
+  $('chat-msgs').innerHTML = '';
+  addMsg('assistant', "Hey — what would you like to know?");
+  $('chat').classList.add('open');
+}
+
+function addMsg(role, text) {
+  const msgs = $('chat-msgs');
+  const wrap = mk('div',`msg ${role}`);
+  const bub  = mk('div','msg-b'); bub.textContent = text;
+  wrap.appendChild(bub); msgs.appendChild(wrap);
   msgs.scrollTop = msgs.scrollHeight;
-  return el;
+  return wrap;
 }
 
-async function sendChatMessage() {
-  if (chatInFlight) return;
-  const input = document.getElementById('chat-input');
-  const msg   = input.value.trim();
-  if (!msg) return;
-
-  input.value = '';
-  chatInFlight = true;
-  input.disabled = true;
-  document.getElementById('chat-send').disabled = true;
-
-  addChatMsg('user', msg);
-  chatMessages.push({ role: 'user', content: msg });
-
-  const typingEl = addChatMsg('assistant', '···', true);
-
+async function sendChat() {
+  const inp = $('chat-inp');
+  const msg = inp.value.trim(); if (!msg) return;
+  inp.value = ''; addMsg('user', msg);
+  chatHistory.push({ role:'user', content:msg });
+  const typing = addMsg('assistant','…'); typing.classList.add('typing');
   try {
-    const res  = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nodeId: currentNodeId, messages: chatMessages })
+    const res = await fetch('/api/chat', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ message:msg, history:chatHistory,
+        context: chatCtx ? { type:chatCtx.type, data:chatCtx.data } : null })
     });
-    const data = await res.json();
-    typingEl.remove();
-
-    const reply = data.message || 'something went sideways. try again.';
-    addChatMsg('assistant', reply);
-    chatMessages.push({ role: 'assistant', content: reply });
-
-    // Unlock node after first AI response (client-side, session-persisted)
-    const nodeEl = nodeEls[currentNodeId];
-    if (nodeEl && nodeEl.classList.contains('locked')) {
-      nodeEl.classList.remove('locked');
-      nodeEl.classList.add('unlocking');
-      setTimeout(() => nodeEl.classList.remove('unlocking'), 700);
-
-      // Persist unlock in sessionStorage so refresh keeps it
-      const unlocked = JSON.parse(sessionStorage.getItem('unlocked') || '[]');
-      if (!unlocked.includes(currentNodeId)) {
-        unlocked.push(currentNodeId);
-        sessionStorage.setItem('unlocked', JSON.stringify(unlocked));
-      }
-    }
-  } catch (err) {
-    typingEl.remove();
-    addChatMsg('assistant', 'network issue. try again.');
-  }
-
-  chatInFlight = false;
-  input.disabled = false;
-  document.getElementById('chat-send').disabled = false;
-  input.focus();
+    const data = await res.json(); typing.remove();
+    const reply = data.reply || data.error || 'No response.';
+    addMsg('assistant', reply); chatHistory.push({ role:'assistant', content:reply });
+  } catch(e) { typing.remove(); addMsg('assistant','Connection error.'); }
 }
 
-document.getElementById('chat-input').addEventListener('keydown', e => {
-  if (e.key === 'Enter') sendChatMessage();
-});
-document.getElementById('chat-send').addEventListener('click', sendChatMessage);
-document.getElementById('chat-close').addEventListener('click', closeChatPanel);
+// ── EVENTS ───────────────────────────────────────────────────────────────────
+$('ch-close').addEventListener('click',  () => $('chat').classList.remove('open'));
+$('chat-send').addEventListener('click', sendChat);
+$('chat-inp').addEventListener('keydown', e => { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat();} });
+$('vp').addEventListener('click', e => { if(!e.target.closest('.bar')) hideHover(); });
+window.addEventListener('resize', render);
 
-/* ═══════════════════════════════════════════════════════════
-   INIT
-   ═══════════════════════════════════════════════════════════ */
-async function init() {
-  const tree = document.getElementById('tree');
-
-  // Show loading state
-  const stateMsg = document.createElement('div');
-  stateMsg.id = 'state-msg';
-  stateMsg.textContent = '···';
-  tree.appendChild(stateMsg);
-
-  // Fetch all nodes from Supabase
-  const rows = await sbGet('nodes', 'order=sort_order.asc');
-
-  stateMsg.remove();
-
-  if (!rows || rows.length === 0) {
-    const empty = document.createElement('div');
-    empty.id = 'state-msg';
-    empty.innerHTML = 'nothing here yet<br><span style="font-size:9px;opacity:0.5">visit <a href="/admin" style="color:rgba(255,255,255,0.4);">/admin</a> to get started</span>';
-    tree.appendChild(empty);
-    return;
+// ── INIT ─────────────────────────────────────────────────────────────────────
+(async function init() {
+  try {
+    await loadData();
+    initSlider();
+    render();
+  } catch(err) {
+    console.error('Init error:', err);
+  } finally {
+    const loader = $('loading');
+    loader.classList.add('done');
+    setTimeout(() => loader.remove(), 600);
   }
-
-  // Apply any session-unlocked nodes
-  const sessionUnlocked = JSON.parse(sessionStorage.getItem('unlocked') || '[]');
-  const processedRows = rows.map(n => ({
-    ...n,
-    is_locked: n.is_locked && !sessionUnlocked.includes(n.id)
-  }));
-
-  // Build nested tree
-  const treeData = buildTreeFromFlat(processedRows);
-  if (!treeData) return;
-
-  const rootNc = buildNode(treeData, null);
-  tree.appendChild(rootNc);
-
-  // Root node: always expanded, not clickable
-  const rootBox = nodeEls['root'];
-  const rootCw  = rootNc.querySelector(':scope > .children-wrap');
-  if (rootBox) {
-    rootBox.classList.remove('clickable');
-    rootBox.style.cursor = 'default';
-    const rootInd = rootBox.querySelector('.n-ind');
-    if (rootInd) rootInd.remove();
-    rootBox.classList.add('expanded');
-  }
-  if (rootCw) rootCw.classList.remove('hidden');
-
-  raf2(drawLines);
-  window.addEventListener('resize', drawLines);
-}
-
-init();
+})();
 </script>
 </body>
 </html>

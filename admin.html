@@ -389,6 +389,176 @@
       margin-left: 0.5rem;
       transition: color 0.2s;
     }
+
+    /* ─── MODE TABS ─── */
+    .mode-tabs {
+      display: flex;
+      gap: 0;
+      border: 1px solid var(--border2);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .mode-tab {
+      background: none;
+      border: none;
+      border-right: 1px solid var(--border2);
+      color: var(--text-faint);
+      font-family: inherit;
+      font-size: 9px;
+      padding: 0.3rem 0.85rem;
+      cursor: pointer;
+      letter-spacing: 0.08em;
+      transition: all 0.12s;
+    }
+    .mode-tab:last-child { border-right: none; }
+    .mode-tab:hover { color: var(--text-dim); background: rgba(255,255,255,0.03); }
+    .mode-tab.active { color: var(--accent); background: rgba(255,255,255,0.06); }
+
+    /* ─── AINFO PANEL ─── */
+    #ainfo-panel {
+      display: none;
+      flex: 1;
+      overflow: hidden;
+      flex-direction: column;
+    }
+
+    /* Sub-tabs */
+    #ainfo-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      padding: 0 1.5rem;
+    }
+    .ainfo-tab {
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--text-faint);
+      font-family: inherit;
+      font-size: 10px;
+      padding: 0.7rem 1.1rem 0.6rem;
+      cursor: pointer;
+      letter-spacing: 0.08em;
+      transition: all 0.12s;
+      margin-bottom: -1px;
+    }
+    .ainfo-tab:hover { color: var(--text-dim); }
+    .ainfo-tab.active { color: var(--text); border-bottom-color: rgba(255,255,255,0.3); }
+
+    /* Layout: form left, list right */
+    #ainfo-body {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* Form pane */
+    #ainfo-form-pane {
+      width: 380px;
+      flex-shrink: 0;
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 1.5rem 1.5rem 2rem;
+    }
+    #ainfo-form-pane::-webkit-scrollbar { width: 3px; }
+    #ainfo-form-pane::-webkit-scrollbar-thumb { background: var(--border); }
+
+    .ainfo-form-title {
+      font-size: 9px;
+      color: var(--text-faint);
+      letter-spacing: 0.14em;
+      margin-bottom: 1.2rem;
+      text-transform: uppercase;
+    }
+
+    /* List pane */
+    #ainfo-list-pane {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem 1.5rem 2rem;
+    }
+    #ainfo-list-pane::-webkit-scrollbar { width: 3px; }
+    #ainfo-list-pane::-webkit-scrollbar-thumb { background: var(--border); }
+
+    .ainfo-list-title {
+      font-size: 9px;
+      color: var(--text-faint);
+      letter-spacing: 0.14em;
+      margin-bottom: 1rem;
+      text-transform: uppercase;
+    }
+
+    .ainfo-record {
+      border: 1px solid var(--border);
+      background: var(--bg2);
+      padding: 0.85rem 1rem;
+      margin-bottom: 0.5rem;
+      position: relative;
+    }
+    .ainfo-record-swatch {
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 3px;
+    }
+    .ainfo-record-title {
+      font-size: 11px;
+      color: var(--accent);
+      margin-bottom: 0.2rem;
+      padding-left: 0.75rem;
+    }
+    .ainfo-record-meta {
+      font-size: 9px;
+      color: var(--text-faint);
+      letter-spacing: 0.06em;
+      padding-left: 0.75rem;
+      margin-bottom: 0.3rem;
+    }
+    .ainfo-record-summary {
+      font-size: 9px;
+      color: var(--text-dim);
+      line-height: 1.65;
+      padding-left: 0.75rem;
+      margin-top: 0.4rem;
+    }
+    .ainfo-record-ai-badge {
+      font-size: 8px;
+      color: rgba(100,200,120,0.5);
+      letter-spacing: 0.06em;
+      padding-left: 0.75rem;
+      margin-top: 0.25rem;
+    }
+
+    /* Color picker row */
+    .color-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .color-row input[type="color"] {
+      width: 32px; height: 26px;
+      border: 1px solid var(--border2);
+      background: var(--bg2);
+      padding: 1px 2px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .color-row input[type="text"] {
+      flex: 1;
+    }
+
+    /* Status in ainfo */
+    #ainfo-status {
+      font-size: 10px;
+      min-height: 1.2rem;
+      margin-left: 0.5rem;
+      transition: color 0.2s;
+    }
+    .ainfo-empty {
+      font-size: 10px;
+      color: var(--text-faint);
+      padding: 1rem 0;
+      letter-spacing: 0.06em;
+    }
   </style>
 </head>
 <body>
@@ -407,6 +577,10 @@
   <div id="topbar">
     <div id="topbar-left">admin / andrew mearns</div>
     <div id="topbar-right">
+      <div class="mode-tabs">
+        <button class="mode-tab active" id="tab-nodes" onclick="switchMode('nodes')">nodes</button>
+        <button class="mode-tab" id="tab-ainfo" onclick="switchMode('ainfo')">ainfo</button>
+      </div>
       <a href="/" target="_blank" class="topbar-link">preview site →</a>
       <span class="topbar-link" style="cursor:pointer" onclick="logout()">sign out</span>
     </div>
@@ -556,6 +730,147 @@ ADMIN_SECRET        = your-chosen-password</div>
     </div><!-- /editor -->
 
   </div><!-- /main -->
+
+  <!-- ── AINFO PANEL ── -->
+  <div id="ainfo-panel">
+
+    <div id="ainfo-tabs">
+      <button class="ainfo-tab active" data-ainfo="ainfo_company"         onclick="switchAinfoTab('ainfo_company')">company</button>
+      <button class="ainfo-tab"        data-ainfo="ainfo_role"            onclick="switchAinfoTab('ainfo_role')">role</button>
+      <button class="ainfo-tab"        data-ainfo="ainfo_accomplishments" onclick="switchAinfoTab('ainfo_accomplishments')">accomplishments</button>
+      <button class="ainfo-tab"        data-ainfo="ainfo_personal"        onclick="switchAinfoTab('ainfo_personal')">personal</button>
+    </div>
+
+    <div id="ainfo-body">
+
+      <!-- Form pane -->
+      <div id="ainfo-form-pane">
+        <div class="ainfo-form-title" id="ainfo-form-title">company</div>
+
+        <!-- ainfo_company fields -->
+        <div id="af-company" class="af-fields">
+          <div class="field">
+            <label>company name</label>
+            <input type="text" id="af-company_name" placeholder="e.g. Salesforce" autocomplete="off" />
+          </div>
+          <div class="form-row">
+            <div class="field">
+              <label>start date</label>
+              <input type="date" id="af-company_start" />
+            </div>
+            <div class="field">
+              <label>end date (blank = present)</label>
+              <input type="date" id="af-company_end" />
+            </div>
+          </div>
+          <div class="field">
+            <label>description</label>
+            <textarea id="af-company_desc" placeholder="What did this company do? Any context that helps AI write a punchy summary."></textarea>
+          </div>
+          <div class="field">
+            <label>bar color</label>
+            <div class="color-row">
+              <input type="color" id="af-company_color_pick" value="#1e46be" oninput="syncColor('company')" />
+              <input type="text"  id="af-company_color_hex"  value="#1e46be" oninput="syncColorHex('company')" placeholder="#1e46be" />
+            </div>
+          </div>
+        </div>
+
+        <!-- ainfo_role fields -->
+        <div id="af-role" class="af-fields" style="display:none">
+          <div class="field">
+            <label>title</label>
+            <input type="text" id="af-role_title" placeholder="e.g. Senior Account Executive" autocomplete="off" />
+          </div>
+          <div class="form-row">
+            <div class="field">
+              <label>start date</label>
+              <input type="date" id="af-role_start" />
+            </div>
+            <div class="field">
+              <label>end date (blank = present)</label>
+              <input type="date" id="af-role_end" />
+            </div>
+          </div>
+          <div class="field">
+            <label>responsibilities</label>
+            <textarea id="af-role_resp" placeholder="What were your main responsibilities? Drop bullets, metrics, anything."></textarea>
+          </div>
+          <div class="field">
+            <label>bar color</label>
+            <div class="color-row">
+              <input type="color" id="af-role_color_pick" value="#0082dc" oninput="syncColor('role')" />
+              <input type="text"  id="af-role_color_hex"  value="#0082dc" oninput="syncColorHex('role')" placeholder="#0082dc" />
+            </div>
+          </div>
+        </div>
+
+        <!-- ainfo_accomplishments fields -->
+        <div id="af-accomplishments" class="af-fields" style="display:none">
+          <div class="form-row">
+            <div class="field">
+              <label>start date</label>
+              <input type="date" id="af-acc_start" />
+            </div>
+            <div class="field">
+              <label>end date</label>
+              <input type="date" id="af-acc_end" />
+            </div>
+          </div>
+          <div class="field">
+            <label>description</label>
+            <textarea id="af-acc_desc" placeholder="Describe the accomplishment — metrics, context, impact. More = better AI summary."></textarea>
+          </div>
+          <div class="field">
+            <label>bar color</label>
+            <div class="color-row">
+              <input type="color" id="af-acc_color_pick" value="#00cdff" oninput="syncColor('accomplishments')" />
+              <input type="text"  id="af-acc_color_hex"  value="#00cdff" oninput="syncColorHex('accomplishments')" placeholder="#00cdff" />
+            </div>
+          </div>
+        </div>
+
+        <!-- ainfo_personal fields -->
+        <div id="af-personal" class="af-fields" style="display:none">
+          <div class="form-row">
+            <div class="field">
+              <label>start date</label>
+              <input type="date" id="af-pers_start" />
+            </div>
+            <div class="field">
+              <label>end date</label>
+              <input type="date" id="af-pers_end" />
+            </div>
+          </div>
+          <div class="field">
+            <label>description</label>
+            <textarea id="af-pers_desc" placeholder="What happened? Personal milestone, project, move, event — anything you want on the timeline."></textarea>
+          </div>
+          <div class="field">
+            <label>bar color</label>
+            <div class="color-row">
+              <input type="color" id="af-pers_color_pick" value="#c46414" oninput="syncColor('personal')" />
+              <input type="text"  id="af-pers_color_hex"  value="#c46414" oninput="syncColorHex('personal')" placeholder="#c46414" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Save row -->
+        <div id="action-btns" style="margin-top:0.5rem">
+          <button class="btn btn-primary" id="ainfo-save-btn" onclick="saveAinfo()">✨ save + ai generate</button>
+          <span id="ainfo-status"></span>
+        </div>
+      </div><!-- /form pane -->
+
+      <!-- List pane -->
+      <div id="ainfo-list-pane">
+        <div class="ainfo-list-title" id="ainfo-list-title">existing company records</div>
+        <div id="ainfo-records-list"><div class="ainfo-empty">loading…</div></div>
+      </div>
+
+    </div><!-- /ainfo-body -->
+  </div><!-- /ainfo-panel -->
+
 </div><!-- /admin -->
 
 <script>
@@ -620,8 +935,9 @@ function logout() {
 }
 
 async function showAdmin() {
-  document.getElementById('gate').style.display  = 'none';
-  document.getElementById('admin').style.display = 'flex';
+  document.getElementById('gate').style.display        = 'none';
+  document.getElementById('admin').style.display       = 'flex';
+  document.getElementById('ainfo-panel').style.display = 'none'; // start in nodes mode
   await loadNodes();
 }
 
@@ -972,6 +1288,291 @@ function copySQL() {
     btn.textContent = 'copied ✓';
     setTimeout(() => { btn.textContent = 'copy sql'; }, 2000);
   });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   MODE SWITCHING (nodes ↔ ainfo)
+   ═══════════════════════════════════════════════════════════ */
+function switchMode(mode) {
+  const nodesPanel = document.getElementById('main');
+  const ainfoPanel = document.getElementById('ainfo-panel');
+  const tabNodes   = document.getElementById('tab-nodes');
+  const tabAinfo   = document.getElementById('tab-ainfo');
+
+  if (mode === 'nodes') {
+    nodesPanel.style.display = 'flex';
+    ainfoPanel.style.display = 'none';
+    tabNodes.classList.add('active');
+    tabAinfo.classList.remove('active');
+  } else {
+    nodesPanel.style.display = 'none';
+    ainfoPanel.style.display = 'flex';
+    tabNodes.classList.remove('active');
+    tabAinfo.classList.add('active');
+    loadAinfoRecords();
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   AINFO STATE
+   ═══════════════════════════════════════════════════════════ */
+let currentAinfoTable = 'ainfo_company';
+
+const AINFO_META = {
+  ainfo_company: {
+    label: 'company',
+    listTitle: 'existing company records',
+    defaultColor: '#1e46be',
+    getRecord: () => ({
+      company_name: document.getElementById('af-company_name').value.trim(),
+      start_date:   document.getElementById('af-company_start').value,
+      end_date:     document.getElementById('af-company_end').value || null,
+      description:  document.getElementById('af-company_desc').value.trim() || null,
+      color:        document.getElementById('af-company_color_hex').value.trim() || '#1e46be'
+    }),
+    validate: r => {
+      if (!r.company_name) return 'company name is required';
+      if (!r.start_date)   return 'start date is required';
+      return null;
+    },
+    resetForm: () => {
+      document.getElementById('af-company_name').value = '';
+      document.getElementById('af-company_start').value = '';
+      document.getElementById('af-company_end').value   = '';
+      document.getElementById('af-company_desc').value  = '';
+      document.getElementById('af-company_color_hex').value  = '#1e46be';
+      document.getElementById('af-company_color_pick').value = '#1e46be';
+    },
+    renderRecord: r => {
+      const title = r.ai_title || r.company_name;
+      const meta  = [r.company_name, fmtADate(r.start_date) + ' → ' + (r.end_date ? fmtADate(r.end_date) : 'present')].join(' · ');
+      return { title, meta, summary: r.ai_summary };
+    }
+  },
+  ainfo_role: {
+    label: 'role',
+    listTitle: 'existing role records',
+    defaultColor: '#0082dc',
+    getRecord: () => ({
+      title:           document.getElementById('af-role_title').value.trim(),
+      start_date:      document.getElementById('af-role_start').value,
+      end_date:        document.getElementById('af-role_end').value || null,
+      responsibilities: document.getElementById('af-role_resp').value.trim() || null,
+      color:           document.getElementById('af-role_color_hex').value.trim() || '#0082dc'
+    }),
+    validate: r => {
+      if (!r.title)      return 'title is required';
+      if (!r.start_date) return 'start date is required';
+      return null;
+    },
+    resetForm: () => {
+      document.getElementById('af-role_title').value = '';
+      document.getElementById('af-role_start').value = '';
+      document.getElementById('af-role_end').value   = '';
+      document.getElementById('af-role_resp').value  = '';
+      document.getElementById('af-role_color_hex').value  = '#0082dc';
+      document.getElementById('af-role_color_pick').value = '#0082dc';
+    },
+    renderRecord: r => {
+      const title = r.ai_title || r.title;
+      const meta  = [r.title, fmtADate(r.start_date) + ' → ' + (r.end_date ? fmtADate(r.end_date) : 'present')].join(' · ');
+      return { title, meta, summary: r.ai_summary };
+    }
+  },
+  ainfo_accomplishments: {
+    label: 'accomplishment',
+    listTitle: 'existing accomplishment records',
+    defaultColor: '#00cdff',
+    getRecord: () => ({
+      start_date:  document.getElementById('af-acc_start').value,
+      end_date:    document.getElementById('af-acc_end').value || null,
+      description: document.getElementById('af-acc_desc').value.trim(),
+      color:       document.getElementById('af-acc_color_hex').value.trim() || '#00cdff'
+    }),
+    validate: r => {
+      if (!r.start_date)  return 'start date is required';
+      if (!r.description) return 'description is required';
+      return null;
+    },
+    resetForm: () => {
+      document.getElementById('af-acc_start').value = '';
+      document.getElementById('af-acc_end').value   = '';
+      document.getElementById('af-acc_desc').value  = '';
+      document.getElementById('af-acc_color_hex').value  = '#00cdff';
+      document.getElementById('af-acc_color_pick').value = '#00cdff';
+    },
+    renderRecord: r => {
+      const title = r.ai_title || r.description.slice(0, 40) + '…';
+      const meta  = fmtADate(r.start_date) + ' → ' + (r.end_date ? fmtADate(r.end_date) : r.start_date);
+      return { title, meta, summary: r.ai_summary };
+    }
+  },
+  ainfo_personal: {
+    label: 'personal',
+    listTitle: 'existing personal records',
+    defaultColor: '#c46414',
+    getRecord: () => ({
+      start_date:  document.getElementById('af-pers_start').value,
+      end_date:    document.getElementById('af-pers_end').value || null,
+      description: document.getElementById('af-pers_desc').value.trim(),
+      color:       document.getElementById('af-pers_color_hex').value.trim() || '#c46414'
+    }),
+    validate: r => {
+      if (!r.start_date)  return 'start date is required';
+      if (!r.description) return 'description is required';
+      return null;
+    },
+    resetForm: () => {
+      document.getElementById('af-pers_start').value = '';
+      document.getElementById('af-pers_end').value   = '';
+      document.getElementById('af-pers_desc').value  = '';
+      document.getElementById('af-pers_color_hex').value  = '#c46414';
+      document.getElementById('af-pers_color_pick').value = '#c46414';
+    },
+    renderRecord: r => {
+      const title = r.ai_title || r.description.slice(0, 40) + '…';
+      const meta  = fmtADate(r.start_date) + ' → ' + (r.end_date ? fmtADate(r.end_date) : r.start_date);
+      return { title, meta, summary: r.ai_summary };
+    }
+  }
+};
+
+function fmtADate(d) {
+  if (!d) return '?';
+  return new Date(d).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   AINFO TAB SWITCHING
+   ═══════════════════════════════════════════════════════════ */
+function switchAinfoTab(table) {
+  currentAinfoTable = table;
+
+  // Update tab highlights
+  document.querySelectorAll('.ainfo-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.ainfo === table);
+  });
+
+  // Show correct form section
+  document.querySelectorAll('.af-fields').forEach(f => f.style.display = 'none');
+  const key = table.replace('ainfo_', '');
+  const formEl = document.getElementById('af-' + key);
+  if (formEl) formEl.style.display = 'block';
+
+  // Update titles
+  const meta = AINFO_META[table];
+  document.getElementById('ainfo-form-title').textContent = meta.label;
+  document.getElementById('ainfo-list-title').textContent = meta.listTitle;
+
+  clearAinfoStatus();
+  loadAinfoRecords();
+}
+
+/* ═══════════════════════════════════════════════════════════
+   LOAD + RENDER RECORDS
+   ═══════════════════════════════════════════════════════════ */
+async function loadAinfoRecords() {
+  const list = document.getElementById('ainfo-records-list');
+  list.innerHTML = '<div class="ainfo-empty">loading…</div>';
+
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/${currentAinfoTable}?order=start_date.desc`,
+      { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
+    );
+    const records = res.ok ? await res.json() : [];
+
+    if (!records.length) {
+      list.innerHTML = '<div class="ainfo-empty">no records yet — add one on the left</div>';
+      return;
+    }
+
+    const meta = AINFO_META[currentAinfoTable];
+    list.innerHTML = '';
+
+    records.forEach(r => {
+      const info = meta.renderRecord(r);
+      const el   = document.createElement('div');
+      el.className = 'ainfo-record';
+      el.innerHTML = `
+        <div class="ainfo-record-swatch" style="background:${r.color || meta.defaultColor}"></div>
+        <div class="ainfo-record-title">${info.title}</div>
+        <div class="ainfo-record-meta">${info.meta}</div>
+        ${info.summary ? `<div class="ainfo-record-summary">${info.summary}</div>` : ''}
+        ${r.ai_title ? '<div class="ainfo-record-ai-badge">✓ ai generated</div>' : '<div class="ainfo-record-ai-badge" style="color:rgba(200,150,80,0.5)">⏳ pending ai</div>'}
+      `;
+      list.appendChild(el);
+    });
+  } catch (err) {
+    list.innerHTML = `<div class="ainfo-empty">error loading records: ${err.message}</div>`;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SAVE AINFO RECORD
+   ═══════════════════════════════════════════════════════════ */
+async function saveAinfo() {
+  const meta   = AINFO_META[currentAinfoTable];
+  const record = meta.getRecord();
+  const err    = meta.validate(record);
+
+  if (err) { showAinfoStatus(err, true); return; }
+
+  const btn = document.getElementById('ainfo-save-btn');
+  btn.textContent = '···';
+  btn.disabled    = true;
+  showAinfoStatus('saving + generating ai…');
+
+  try {
+    const res = await fetch('/api/save-ainfo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ table: currentAinfoTable, record, adminSecret })
+    });
+    const data = await res.json();
+
+    if (data.error) throw new Error(data.error);
+
+    showAinfoStatus('saved ✓' + (data.record?.ai_title ? ` — "${data.record.ai_title}"` : ''));
+    meta.resetForm();
+    await loadAinfoRecords();
+  } catch (err) {
+    showAinfoStatus(`error: ${err.message}`, true);
+  }
+
+  btn.textContent = '✨ save + ai generate';
+  btn.disabled    = false;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   COLOR SYNC (picker ↔ hex input)
+   ═══════════════════════════════════════════════════════════ */
+function syncColor(key) {
+  // color picker → hex input
+  const picker = document.getElementById(`af-${key}_color_pick`);
+  const hex    = document.getElementById(`af-${key}_color_hex`);
+  if (picker && hex) hex.value = picker.value;
+}
+function syncColorHex(key) {
+  // hex input → color picker
+  const picker = document.getElementById(`af-${key}_color_pick`);
+  const hex    = document.getElementById(`af-${key}_color_hex`);
+  if (picker && hex && /^#[0-9a-fA-F]{6}$/.test(hex.value)) {
+    picker.value = hex.value;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   AINFO STATUS
+   ═══════════════════════════════════════════════════════════ */
+function showAinfoStatus(msg, isError = false) {
+  const el = document.getElementById('ainfo-status');
+  el.textContent = msg;
+  el.style.color = isError ? 'var(--red)' : 'var(--green)';
+  if (!isError) setTimeout(() => { if (el.textContent === msg) el.textContent = ''; }, 5000);
+}
+function clearAinfoStatus() {
+  document.getElementById('ainfo-status').textContent = '';
 }
 
 /* ═══════════════════════════════════════════════════════════
