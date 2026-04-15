@@ -1,6 +1,7 @@
 {
   "version": 2,
   "routes": [
-    { "src": "/admin", "dest": "/admin.html" }
+    { "src": "/admin",        "dest": "/admin.html" },
+    { "src": "/admin/import", "dest": "/admin-import.html" }
   ]
 }

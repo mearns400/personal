@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>import — andrew mearns</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:       #04091a;
+      --surface:  #0b1120;
+      --border:   #1a2540;
+      --ink:      rgba(200,220,255,0.85);
+      --dim:      rgba(200,220,255,0.35);
+      --work-rgb: 0, 200, 255;
+      --run-rgb:  0, 255, 140;
+      --ai-rgb:   190, 80, 255;
+      --exp-rgb:  255, 149, 0;
+      --lead-rgb: 255, 35, 98;
+      --tech-rgb: 255, 204, 0;
+      --acc-rgb:  255, 59, 48;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: 'Inter', system-ui, sans-serif;
+      min-height: 100vh;
+      padding: 48px 40px;
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 40px;
+    }
+
+    h1 { font-size: 0.9rem; font-weight: 500; color: #fff; }
+    h1 a { color: var(--dim); text-decoration: none; font-weight: 300; }
+    h1 a:hover { color: var(--ink); }
+
+    /* ── Sections ── */
+    section { margin-bottom: 32px; }
+
+    label {
+      display: block;
+      font-size: 0.6rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--dim);
+      margin-bottom: 8px;
+    }
+
+    input[type="password"],
+    textarea {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--ink);
+      font-family: inherit;
+      font-size: 0.78rem;
+      font-weight: 300;
+      padding: 10px 12px;
+      outline: none;
+      resize: vertical;
+      transition: border-color 0.2s;
+    }
+
+    input[type="password"]:focus,
+    textarea:focus { border-color: rgba(200,220,255,0.3); }
+
+    textarea { min-height: 180px; line-height: 1.6; }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 18px;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      background: transparent;
+      color: var(--ink);
+      font-family: inherit;
+      font-size: 0.68rem;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .btn:hover { background: rgba(200,220,255,0.06); border-color: rgba(200,220,255,0.25); }
+    .btn:disabled { opacity: 0.35; cursor: default; }
+
+    .btn-primary {
+      background: rgba(0,200,255,0.1);
+      border-color: rgba(0,200,255,0.35);
+      color: rgb(var(--work-rgb));
+    }
+    .btn-primary:hover { background: rgba(0,200,255,0.18); }
+
+    .btn-save {
+      background: rgba(0,255,140,0.1);
+      border-color: rgba(0,255,140,0.35);
+      color: rgb(var(--run-rgb));
+    }
+    .btn-save:hover { background: rgba(0,255,140,0.18); }
+
+    /* ── Status bar ── */
+    #status {
+      font-size: 0.65rem;
+      color: var(--dim);
+      padding: 8px 0;
+      min-height: 24px;
+    }
+    #status.error { color: rgba(255,80,80,0.9); }
+    #status.success { color: rgba(0,255,140,0.8); }
+
+    /* ── Preview list ── */
+    #preview { display: none; }
+    #preview h2 {
+      font-size: 0.62rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--dim);
+      margin-bottom: 14px;
+    }
+
+    .entry-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+    }
+
+    .entry-content {
+      font-size: 0.75rem;
+      font-weight: 300;
+      line-height: 1.6;
+      color: rgba(255,255,255,0.82);
+      margin-bottom: 10px;
+    }
+
+    .entry-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+
+    /* Tag chips */
+    .tag-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      border-radius: 3px;
+      font-size: 0.57rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      user-select: none;
+      border: 1px solid transparent;
+      transition: opacity 0.15s;
+    }
+
+    .tag-chip.off { opacity: 0.25; }
+
+    .tag-chip .conf {
+      font-weight: 300;
+      opacity: 0.65;
+    }
+
+    /* Chip colors by col */
+    .tag-chip[data-col="work"]  { background: rgba(var(--work-rgb),0.12); border-color: rgba(var(--work-rgb),0.3); color: rgb(var(--work-rgb)); }
+    .tag-chip[data-col="run"]   { background: rgba(var(--run-rgb), 0.12); border-color: rgba(var(--run-rgb), 0.3); color: rgb(var(--run-rgb)); }
+    .tag-chip[data-col="ai"]    { background: rgba(var(--ai-rgb),  0.12); border-color: rgba(var(--ai-rgb),  0.3); color: rgb(var(--ai-rgb)); }
+
+    .preview-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .preview-count {
+      font-size: 0.62rem;
+      color: var(--dim);
+    }
+
+    /* Divider */
+    hr { border: none; border-top: 1px solid var(--border); margin: 28px 0; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1><a href="/">← andrew mearns</a> / import</h1>
+  </header>
+
+  <!-- Auth -->
+  <section>
+    <label>admin secret</label>
+    <input type="password" id="secret" placeholder="••••••••" autocomplete="current-password">
+  </section>
+
+  <hr>
+
+  <!-- Paste input -->
+  <section>
+    <label>paste content</label>
+    <textarea id="content" placeholder="Paste anything — resume bullets, a LinkedIn bio, a paragraph about yourself, notes. One big blob is fine."></textarea>
+  </section>
+
+  <div style="display:flex; gap:10px; align-items:center;">
+    <button class="btn btn-primary" id="parseBtn" onclick="handleParse()">parse with ai →</button>
+    <div id="status"></div>
+  </div>
+
+  <hr>
+
+  <!-- Preview -->
+  <div id="preview">
+    <h2 id="previewHeading">parsed entries — click tags to toggle</h2>
+    <div id="entryList"></div>
+    <div class="preview-actions">
+      <button class="btn btn-save" id="saveBtn" onclick="handleSave()">save to database →</button>
+      <span class="preview-count" id="previewCount"></span>
+    </div>
+  </div>
+
+  <script>
+    let parsedEntries = [];
+
+    const ROW_LABELS = {
+      experience: 'exp',
+      leadership: 'lead',
+      technology: 'tech',
+      accomplishments: 'acc'
+    };
+
+    function setStatus(msg, type = '') {
+      const el = document.getElementById('status');
+      el.textContent = msg;
+      el.className = type;
+    }
+
+    async function handleParse() {
+      const secret = document.getElementById('secret').value.trim();
+      const content = document.getElementById('content').value.trim();
+
+      if (!content) return setStatus('paste some content first', 'error');
+
+      const btn = document.getElementById('parseBtn');
+      btn.disabled = true;
+      setStatus('parsing…');
+
+      try {
+        const res = await fetch('/api/import-parse', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content })
+        });
+
+        const data = await res.json();
+        if (!res.ok) return setStatus(data.error || 'parse failed', 'error');
+
+        parsedEntries = data.entries.map(e => ({
+          ...e,
+          tags: e.tags.map(t => ({ ...t, active: true }))
+        }));
+
+        renderPreview();
+        setStatus('');
+      } catch (err) {
+        setStatus(err.message, 'error');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    function renderPreview() {
+      const list = document.getElementById('entryList');
+      const preview = document.getElementById('preview');
+      const count = document.getElementById('previewCount');
+
+      list.innerHTML = '';
+      preview.style.display = 'block';
+      count.textContent = `${parsedEntries.length} entries`;
+
+      parsedEntries.forEach((entry, i) => {
+        const card = document.createElement('div');
+        card.className = 'entry-card';
+
+        const text = document.createElement('div');
+        text.className = 'entry-content';
+        text.textContent = entry.content;
+        card.appendChild(text);
+
+        const tags = document.createElement('div');
+        tags.className = 'entry-tags';
+
+        entry.tags.forEach((tag, j) => {
+          const chip = document.createElement('span');
+          chip.className = 'tag-chip' + (tag.active ? '' : ' off');
+          chip.dataset.col = tag.col;
+          chip.innerHTML = `${tag.col} · ${ROW_LABELS[tag.row] || tag.row} <span class="conf">${Math.round(tag.confidence * 100)}%</span>`;
+          chip.onclick = () => {
+            tag.active = !tag.active;
+            chip.classList.toggle('off', !tag.active);
+          };
+          tags.appendChild(chip);
+        });
+
+        card.appendChild(tags);
+        list.appendChild(card);
+      });
+    }
+
+    async function handleSave() {
+      const secret = document.getElementById('secret').value.trim();
+      if (!secret) return setStatus('enter admin secret first', 'error');
+      if (!parsedEntries.length) return setStatus('nothing to save', 'error');
+
+      const btn = document.getElementById('saveBtn');
+      btn.disabled = true;
+      setStatus('saving…');
+
+      // Only send active tags
+      const toSave = parsedEntries.map(e => ({
+        content: e.content,
+        tags: e.tags.filter(t => t.active).map(({ col, row, confidence }) => ({ col, row, confidence }))
+      }));
+
+      try {
+        const res = await fetch('/api/import-save', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${secret}`
+          },
+          body: JSON.stringify({ entries: toSave })
+        });
+
+        const data = await res.json();
+        if (!res.ok) return setStatus(data.error || 'save failed', 'error');
+
+        setStatus(`✓ saved ${data.saved} entries`, 'success');
+        if (data.errors) console.warn('Partial errors:', data.errors);
+
+        // Clear after save
+        setTimeout(() => {
+          parsedEntries = [];
+          document.getElementById('content').value = '';
+          document.getElementById('preview').style.display = 'none';
+          setStatus('');
+        }, 2500);
+
+      } catch (err) {
+        setStatus(err.message, 'error');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+  </script>
+
+</body>
+</html>
