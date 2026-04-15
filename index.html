@@ -3,104 +3,165 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Andrew Mearns</title>
+  <title>andrew mearns</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #0b0c10;
-      --surface: #13141a;
-      --border: #1f2030;
-      --text: #e6e6f0;
-      --muted: #55566a;
-      --running: #22d3a0;
-      --work: #7c6ff7;
-      --personal: #f5a623;
+      --bg:   #04091a;
+      --ink:  rgba(200,220,255,0.85);
+      --dim:  rgba(200,220,255,0.28);
+
+      /* column colors */
+      --work-rgb: 0, 200, 255;
+      --run-rgb:  0, 255, 140;
+      --ai-rgb:   190, 80, 255;
+
+      /* row colors */
+      --exp-rgb:  255, 149, 0;
+      --lead-rgb: 255, 35, 98;
+      --tech-rgb: 255, 204, 0;
+      --acc-rgb:  255, 59, 48;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { background: var(--bg); }
 
     body {
       background: var(--bg);
-      color: var(--text);
-      font-family: -apple-system, 'Inter', 'Segoe UI', sans-serif;
+      color: var(--ink);
+      font-family: 'Inter', system-ui, sans-serif;
       min-height: 100vh;
-      padding: 56px 24px 80px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 52px 60px 60px;
+      gap: 20px;
     }
 
-    /* Header */
+    /* ─── Header ─── */
     header {
-      text-align: center;
-      margin-bottom: 72px;
+      width: 100%;
+      max-width: 860px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
 
-    header h1 {
-      font-size: clamp(2.4rem, 6vw, 4rem);
-      font-weight: 700;
-      letter-spacing: -0.03em;
+    h1 {
+      font-size: 0.88rem;
+      font-weight: 500;
+      letter-spacing: 0.01em;
       color: #fff;
     }
 
-    header p {
-      margin-top: 10px;
-      font-size: 0.88rem;
-      color: var(--muted);
-      letter-spacing: 0.04em;
-    }
+    h1 span { color: rgba(255,255,255,0.28); font-weight: 300; }
 
-    /* Matrix grid */
-    .matrix {
-      display: grid;
-      grid-template-columns: 110px repeat(3, 1fr);
-      gap: 10px;
-      max-width: 980px;
-      margin: 0 auto;
-    }
-
-    .corner { /* empty top-left */ }
-
-    .col-header {
-      text-align: center;
-      font-size: 0.72rem;
-      font-weight: 700;
+    #counter {
+      font-size: 0.54rem;
+      font-weight: 500;
       letter-spacing: 0.12em;
-      text-transform: uppercase;
-      padding: 10px 12px;
-      border-radius: 8px;
+      color: var(--dim);
+      transition: color 0.5s;
+    }
+    #counter.complete { color: rgba(0,255,140,0.8); }
+
+    /* ─── Matrix ─── */
+    .matrix {
+      width: 100%;
+      max-width: 860px;
+      display: grid;
+      grid-template-columns: 26px repeat(3, 1fr);
+      grid-template-rows: 22px repeat(4, 72px);
+      gap: 0;
     }
 
-    .col-running  { color: var(--running);  background: rgba(34,211,160,0.07);  }
-    .col-work     { color: var(--work);     background: rgba(124,111,247,0.07); }
-    .col-personal { color: var(--personal); background: rgba(245,166,35,0.07);  }
+    .corner { /* empty */ }
 
-    .row-label {
+    /* ─── Column & Row headers — same style ─── */
+    .col-header,
+    .row-header {
       display: flex;
       align-items: center;
-      justify-content: flex-end;
-      padding-right: 14px;
-      font-size: 0.68rem;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--muted);
+      justify-content: center;
+      font-size: 0.5rem;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      border-radius: 0;
+      position: relative;
+      overflow: hidden;
+      transition: filter 0.2s;
     }
 
-    /* Flip cards */
+    .row-header {
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+    }
+
+    /* shared inner tint layer */
+    .col-header::before,
+    .row-header::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      opacity: 0.13;
+    }
+
+    /* column header colors */
+    .col-header[data-col="work"]  { color: rgb(var(--work-rgb)); border: 1px solid rgba(var(--work-rgb),0.25); }
+    .col-header[data-col="work"]::before  { background: rgb(var(--work-rgb)); }
+    .col-header[data-col="run"]   { color: rgb(var(--run-rgb));  border: 1px solid rgba(var(--run-rgb), 0.25); }
+    .col-header[data-col="run"]::before   { background: rgb(var(--run-rgb)); }
+    .col-header[data-col="ai"]    { color: rgb(var(--ai-rgb));   border: 1px solid rgba(var(--ai-rgb),  0.25); }
+    .col-header[data-col="ai"]::before    { background: rgb(var(--ai-rgb)); }
+
+    /* row header colors */
+    .row-header[data-row="experience"]     { color: rgb(var(--exp-rgb));  border: 1px solid rgba(var(--exp-rgb), 0.25); }
+    .row-header[data-row="experience"]::before     { background: rgb(var(--exp-rgb)); }
+    .row-header[data-row="leadership"]     { color: rgb(var(--lead-rgb)); border: 1px solid rgba(var(--lead-rgb),0.25); }
+    .row-header[data-row="leadership"]::before     { background: rgb(var(--lead-rgb)); }
+    .row-header[data-row="technology"]     { color: rgb(var(--tech-rgb)); border: 1px solid rgba(var(--tech-rgb),0.25); }
+    .row-header[data-row="technology"]::before     { background: rgb(var(--tech-rgb)); }
+    .row-header[data-row="accomplishments"]{ color: rgb(var(--acc-rgb));  border: 1px solid rgba(var(--acc-rgb), 0.25); }
+    .row-header[data-row="accomplishments"]::before{ background: rgb(var(--acc-rgb)); }
+
+    /* ─── Axis flash ─── */
+    .col-header.axis-flash,
+    .row-header.axis-flash {
+      animation: headerFlash 0.5s ease forwards;
+    }
+    @keyframes headerFlash {
+      0%  { filter: brightness(1); }
+      35% { filter: brightness(1.5) saturate(1.1); }
+      100%{ filter: brightness(1); }
+    }
+
+    .card.axis-flash .card-front {
+      animation: cardFlash 0.5s ease forwards;
+    }
+    @keyframes cardFlash {
+      0%  { filter: brightness(1); }
+      35% { filter: brightness(1.6) saturate(1.2); }
+      100%{ filter: brightness(1); }
+    }
+
+    /* ─── Cards ─── */
     .card {
-      perspective: 1200px;
-      height: 178px;
       cursor: pointer;
+      perspective: 1000px;
+      border-radius: 0;
     }
 
     .card-inner {
       position: relative;
       width: 100%;
       height: 100%;
-      transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: transform 0.48s cubic-bezier(0.4, 0, 0.2, 1);
       transform-style: preserve-3d;
     }
 
-    .card.flipped .card-inner {
-      transform: rotateY(180deg);
-    }
+    .card.flipped .card-inner { transform: rotateY(180deg); }
 
     .card-front,
     .card-back {
@@ -108,336 +169,402 @@
       inset: 0;
       backface-visibility: hidden;
       -webkit-backface-visibility: hidden;
-      border-radius: 12px;
-      padding: 20px;
-      background: var(--surface);
-      border: 1px solid var(--border);
+      border-radius: 0;
+      padding: 10px 12px;
       display: flex;
       flex-direction: column;
-      transition: filter 0.2s;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      /* color set per cell below */
     }
 
-    .card-back {
-      transform: rotateY(180deg);
+    .card-back { transform: rotateY(180deg); }
+
+    /* ─── Per-cell glass colors (col × row blend) ─── */
+    .card[data-col="work"][data-row="experience"]      .card-front,
+    .card[data-col="work"][data-row="experience"]      .card-back {
+      background: linear-gradient(135deg, rgba(var(--work-rgb),0.18) 0%, rgba(var(--exp-rgb), 0.13) 100%);
+      border: 1px solid rgba(var(--work-rgb),0.26);
+      box-shadow: inset 0 1px 0 rgba(var(--work-rgb),0.12);
+    }
+    .card[data-col="work"][data-row="leadership"]      .card-front,
+    .card[data-col="work"][data-row="leadership"]      .card-back {
+      background: linear-gradient(135deg, rgba(var(--work-rgb),0.18) 0%, rgba(var(--lead-rgb),0.13) 100%);
+      border: 1px solid rgba(var(--work-rgb),0.26);
+      box-shadow: inset 0 1px 0 rgba(var(--work-rgb),0.12);
+    }
+    .card[data-col="work"][data-row="technology"]      .card-front,
+    .card[data-col="work"][data-row="technology"]      .card-back {
+      background: linear-gradient(135deg, rgba(var(--work-rgb),0.18) 0%, rgba(var(--tech-rgb),0.13) 100%);
+      border: 1px solid rgba(var(--work-rgb),0.26);
+      box-shadow: inset 0 1px 0 rgba(var(--work-rgb),0.12);
+    }
+    .card[data-col="work"][data-row="accomplishments"] .card-front,
+    .card[data-col="work"][data-row="accomplishments"] .card-back {
+      background: linear-gradient(135deg, rgba(var(--work-rgb),0.18) 0%, rgba(var(--acc-rgb), 0.13) 100%);
+      border: 1px solid rgba(var(--work-rgb),0.26);
+      box-shadow: inset 0 1px 0 rgba(var(--work-rgb),0.12);
     }
 
-    /* Accent top border by column */
-    .card[data-col="running"]  .card-front,
-    .card[data-col="running"]  .card-back  { border-top: 2px solid var(--running);  }
-    .card[data-col="work"]     .card-front,
-    .card[data-col="work"]     .card-back  { border-top: 2px solid var(--work);     }
-    .card[data-col="personal"] .card-front,
-    .card[data-col="personal"] .card-back  { border-top: 2px solid var(--personal); }
+    .card[data-col="run"][data-row="experience"]       .card-front,
+    .card[data-col="run"][data-row="experience"]       .card-back {
+      background: linear-gradient(135deg, rgba(var(--run-rgb),0.16) 0%, rgba(var(--exp-rgb), 0.13) 100%);
+      border: 1px solid rgba(var(--run-rgb),0.24);
+      box-shadow: inset 0 1px 0 rgba(var(--run-rgb),0.12);
+    }
+    .card[data-col="run"][data-row="leadership"]       .card-front,
+    .card[data-col="run"][data-row="leadership"]       .card-back {
+      background: linear-gradient(135deg, rgba(var(--run-rgb),0.16) 0%, rgba(var(--lead-rgb),0.13) 100%);
+      border: 1px solid rgba(var(--run-rgb),0.24);
+      box-shadow: inset 0 1px 0 rgba(var(--run-rgb),0.12);
+    }
+    .card[data-col="run"][data-row="technology"]       .card-front,
+    .card[data-col="run"][data-row="technology"]       .card-back {
+      background: linear-gradient(135deg, rgba(var(--run-rgb),0.16) 0%, rgba(var(--tech-rgb),0.13) 100%);
+      border: 1px solid rgba(var(--run-rgb),0.24);
+      box-shadow: inset 0 1px 0 rgba(var(--run-rgb),0.12);
+    }
+    .card[data-col="run"][data-row="accomplishments"]  .card-front,
+    .card[data-col="run"][data-row="accomplishments"]  .card-back {
+      background: linear-gradient(135deg, rgba(var(--run-rgb),0.16) 0%, rgba(var(--acc-rgb), 0.13) 100%);
+      border: 1px solid rgba(var(--run-rgb),0.24);
+      box-shadow: inset 0 1px 0 rgba(var(--run-rgb),0.12);
+    }
 
-    .card:hover .card-inner { filter: brightness(1.06); }
+    .card[data-col="ai"][data-row="experience"]        .card-front,
+    .card[data-col="ai"][data-row="experience"]        .card-back {
+      background: linear-gradient(135deg, rgba(var(--ai-rgb),0.18) 0%, rgba(var(--exp-rgb), 0.13) 100%);
+      border: 1px solid rgba(var(--ai-rgb),0.26);
+      box-shadow: inset 0 1px 0 rgba(var(--ai-rgb),0.12);
+    }
+    .card[data-col="ai"][data-row="leadership"]        .card-front,
+    .card[data-col="ai"][data-row="leadership"]        .card-back {
+      background: linear-gradient(135deg, rgba(var(--ai-rgb),0.18) 0%, rgba(var(--lead-rgb),0.13) 100%);
+      border: 1px solid rgba(var(--ai-rgb),0.26);
+      box-shadow: inset 0 1px 0 rgba(var(--ai-rgb),0.12);
+    }
+    .card[data-col="ai"][data-row="technology"]        .card-front,
+    .card[data-col="ai"][data-row="technology"]        .card-back {
+      background: linear-gradient(135deg, rgba(var(--ai-rgb),0.18) 0%, rgba(var(--tech-rgb),0.13) 100%);
+      border: 1px solid rgba(var(--ai-rgb),0.26);
+      box-shadow: inset 0 1px 0 rgba(var(--ai-rgb),0.12);
+    }
+    .card[data-col="ai"][data-row="accomplishments"]   .card-front,
+    .card[data-col="ai"][data-row="accomplishments"]   .card-back {
+      background: linear-gradient(135deg, rgba(var(--ai-rgb),0.18) 0%, rgba(var(--acc-rgb), 0.13) 100%);
+      border: 1px solid rgba(var(--ai-rgb),0.26);
+      box-shadow: inset 0 1px 0 rgba(var(--ai-rgb),0.12);
+    }
 
-    /* Front */
-    .card-front-row {
-      font-size: 0.64rem;
-      font-weight: 700;
+    /* hover glow uses column color */
+    .card[data-col="work"]:hover  .card-front { box-shadow: inset 0 1px 0 rgba(var(--work-rgb),0.2), 0 0 18px rgba(var(--work-rgb),0.12); }
+    .card[data-col="run"]:hover   .card-front { box-shadow: inset 0 1px 0 rgba(var(--run-rgb), 0.2), 0 0 18px rgba(var(--run-rgb), 0.10); }
+    .card[data-col="ai"]:hover    .card-front { box-shadow: inset 0 1px 0 rgba(var(--ai-rgb),  0.2), 0 0 18px rgba(var(--ai-rgb),  0.12); }
+
+    /* idle pulse per column */
+    .card:not(.discovered)[data-col="work"]  .card-inner { animation: pulseWork  4s ease-in-out infinite; }
+    .card:not(.discovered)[data-col="run"]   .card-inner { animation: pulseRun   4s ease-in-out infinite; }
+    .card:not(.discovered)[data-col="ai"]    .card-inner { animation: pulseAI    4s ease-in-out infinite; }
+    .card.discovered .card-inner { animation: none; }
+
+    @keyframes pulseWork { 0%,100%{ box-shadow: 0 0 0 rgba(var(--work-rgb),0); } 50%{ box-shadow: 0 0 10px rgba(var(--work-rgb),0.14); } }
+    @keyframes pulseRun  { 0%,100%{ box-shadow: 0 0 0 rgba(var(--run-rgb), 0); } 50%{ box-shadow: 0 0 10px rgba(var(--run-rgb), 0.11); } }
+    @keyframes pulseAI   { 0%,100%{ box-shadow: 0 0 0 rgba(var(--ai-rgb),  0); } 50%{ box-shadow: 0 0 10px rgba(var(--ai-rgb),  0.14); } }
+
+    /* ─── Card text ─── */
+    .front-tag {
+      font-size: 0.48rem;
+      font-weight: 500;
       letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 10px;
+      opacity: 0.38;
+      flex-shrink: 0;
+      margin-bottom: 4px;
     }
-
-    .card-front-title {
-      font-size: 1.05rem;
-      font-weight: 600;
+    .front-title {
+      font-size: 0.66rem;
+      font-weight: 300;
       line-height: 1.35;
       flex: 1;
+      color: rgba(255,255,255,0.78);
     }
-
-    .card-front-hint {
-      font-size: 0.61rem;
-      color: var(--muted);
-      letter-spacing: 0.05em;
+    .front-hint {
+      font-size: 0.52rem;
+      opacity: 0.18;
       align-self: flex-end;
-      margin-top: 10px;
+      flex-shrink: 0;
+      margin-top: 4px;
     }
+    .card.discovered .front-hint { opacity: 0; }
 
-    /* Back */
-    .card-back-label {
-      font-size: 0.62rem;
-      font-weight: 700;
+    .back-tag {
+      font-size: 0.46rem;
+      font-weight: 500;
       letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 12px;
+      opacity: 0.38;
+      flex-shrink: 0;
+      margin-bottom: 7px;
     }
-
-    .card-back ul {
-      list-style: none;
-      flex: 1;
-    }
-
+    .card-back ul { list-style: none; flex: 1; overflow: hidden; }
     .card-back ul li {
-      font-size: 0.8rem;
-      line-height: 1.55;
-      color: rgba(230,230,240,0.82);
-      padding-left: 14px;
+      font-size: 0.61rem;
+      font-weight: 300;
+      line-height: 1.5;
+      padding-left: 10px;
       position: relative;
-      margin-bottom: 5px;
+      margin-bottom: 2px;
+      color: rgba(255,255,255,0.8);
     }
+    .card-back ul li::before { content: "›"; position: absolute; left: 0; opacity: 0.4; }
 
-    .card-back ul li::before {
-      content: "→";
-      position: absolute;
-      left: 0;
-      opacity: 0.35;
-      font-size: 0.72rem;
-    }
-
-    /* Responsive */
-    @media (max-width: 640px) {
-      .matrix {
-        grid-template-columns: 76px repeat(3, 1fr);
-        gap: 7px;
-      }
-      .card { height: 162px; }
-      .card-front-title { font-size: 0.9rem; }
-      .card-back ul li { font-size: 0.74rem; }
+    /* scanline */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.035) 2px, rgba(0,0,0,0.035) 4px);
+      pointer-events: none;
+      z-index: 100;
     }
   </style>
 </head>
 <body>
 
   <header>
-    <h1>Andrew Mearns</h1>
-    <p>Click any card to flip it</p>
+    <h1>andrew mearns <span>/ portfolio</span></h1>
+    <div id="counter">0 / 12 unlocked</div>
   </header>
 
   <div class="matrix">
 
-    <!-- Column headers -->
+    <!-- Row 0: column headers -->
     <div class="corner"></div>
-    <div class="col-header col-running">Running</div>
-    <div class="col-header col-work">Work</div>
-    <div class="col-header col-personal">Personal</div>
+    <div class="col-header" data-col="work">work</div>
+    <div class="col-header" data-col="run">running</div>
+    <div class="col-header" data-col="ai">ai</div>
 
-    <!-- ROW: Leadership -->
-    <div class="row-label">Leadership</div>
+    <!-- Row 1: experience -->
+    <div class="row-header" data-row="experience">experience</div>
 
-    <div class="card" data-col="running">
+    <div class="card" data-col="work" data-row="experience">
       <div class="card-inner">
         <div class="card-front">
-          <div class="card-front-row">Leadership</div>
-          <div class="card-front-title">Setting the Pace</div>
-          <div class="card-front-hint">flip ↗</div>
+          <div class="front-tag">work · experience</div>
+          <div class="front-title">a decade of enterprise, then a hard pivot</div>
+          <div class="front-hint">›</div>
         </div>
         <div class="card-back">
-          <div class="card-back-label">Running / Leadership</div>
+          <div class="back-tag">work · experience</div>
           <ul>
-            <li>Group run organiser and pacer</li>
-            <li>Holding others accountable to their goals</li>
-            <li>Racing as shared discipline</li>
+            <li>10+ years in enterprise saas and complex deal cycles</li>
+            <li>sold into fortune 500 across multiple industries</li>
+            <li>pivoted from seller to builder as AI opened the door</li>
           </ul>
         </div>
       </div>
     </div>
 
-    <div class="card" data-col="work">
+    <div class="card" data-col="run" data-row="experience">
       <div class="card-inner">
         <div class="card-front">
-          <div class="card-front-row">Leadership</div>
-          <div class="card-front-title">Building What Doesn't Exist Yet</div>
-          <div class="card-front-hint">flip ↗</div>
+          <div class="front-tag">running · experience</div>
+          <div class="front-title">pavement, trails, and early alarms</div>
+          <div class="front-hint">›</div>
         </div>
         <div class="card-back">
-          <div class="card-back-label">Work / Leadership</div>
+          <div class="back-tag">running · experience</div>
           <ul>
-            <li>Turning vague ideas into working systems</li>
-            <li>Bridging sales instinct and technical execution</li>
-            <li>Getting teams aligned around outcomes</li>
+            <li>years of structured training across road and trail</li>
+            <li>marathon cycles, tempo blocks, long slow distance</li>
+            <li>the discipline of showing up when it's not fun</li>
           </ul>
         </div>
       </div>
     </div>
 
-    <div class="card" data-col="personal">
+    <div class="card" data-col="ai" data-row="experience">
       <div class="card-inner">
         <div class="card-front">
-          <div class="card-front-row">Leadership</div>
-          <div class="card-front-title">Showing Up Consistently</div>
-          <div class="card-front-hint">flip ↗</div>
+          <div class="front-tag">ai · experience</div>
+          <div class="front-title">building at the edge of what's possible</div>
+          <div class="front-hint">›</div>
         </div>
         <div class="card-back">
-          <div class="card-back-label">Personal / Leadership</div>
+          <div class="back-tag">ai · experience</div>
           <ul>
-            <li>Reliable for the people who count on me</li>
-            <li>Leading by doing, not just saying</li>
-            <li>Earning trust over time</li>
+            <li>shipping AI-native products from zero to deployed</li>
+            <li>worked across llm layers: prompting, rag, agents</li>
+            <li>early mover — learning fast, building faster</li>
           </ul>
         </div>
       </div>
     </div>
 
-    <!-- ROW: Skills -->
-    <div class="row-label">Skills</div>
+    <!-- Row 2: leadership -->
+    <div class="row-header" data-row="leadership">leadership</div>
 
-    <div class="card" data-col="running">
+    <div class="card" data-col="work" data-row="leadership">
       <div class="card-inner">
         <div class="card-front">
-          <div class="card-front-row">Skills</div>
-          <div class="card-front-title">Endurance Over Everything</div>
-          <div class="card-front-hint">flip ↗</div>
+          <div class="front-tag">work · leadership</div>
+          <div class="front-title">getting people to move in the same direction</div>
+          <div class="front-hint">›</div>
         </div>
         <div class="card-back">
-          <div class="card-back-label">Running / Skills</div>
+          <div class="back-tag">work · leadership</div>
           <ul>
-            <li>Marathon training and race strategy</li>
-            <li>Recovery, nutrition, and pacing discipline</li>
-            <li>Staying consistent through bad training blocks</li>
+            <li>aligned stakeholders across product, sales, and eng</li>
+            <li>ran deal strategy with c-suite and economic buyers</li>
+            <li>built clarity out of ambiguity, repeatedly</li>
           </ul>
         </div>
       </div>
     </div>
 
-    <div class="card" data-col="work">
+    <div class="card" data-col="run" data-row="leadership">
       <div class="card-inner">
         <div class="card-front">
-          <div class="card-front-row">Skills</div>
-          <div class="card-front-title">Sales Brain, Engineer Hands</div>
-          <div class="card-front-hint">flip ↗</div>
+          <div class="front-tag">running · leadership</div>
+          <div class="front-title">setting the pace others can follow</div>
+          <div class="front-hint">›</div>
         </div>
         <div class="card-back">
-          <div class="card-back-label">Work / Skills</div>
+          <div class="back-tag">running · leadership</div>
           <ul>
-            <li>Enterprise sales and complex deal cycles</li>
-            <li>Prompt engineering and AI workflow design</li>
-            <li>Full-stack building: idea to deployed product</li>
+            <li>group run organiser and pacer</li>
+            <li>accountability partner for runners at every level</li>
+            <li>holding the standard even when it's uncomfortable</li>
           </ul>
         </div>
       </div>
     </div>
 
-    <div class="card" data-col="personal">
+    <div class="card" data-col="ai" data-row="leadership">
       <div class="card-inner">
         <div class="card-front">
-          <div class="card-front-row">Skills</div>
-          <div class="card-front-title">Reading the Room</div>
-          <div class="card-front-hint">flip ↗</div>
+          <div class="front-tag">ai · leadership</div>
+          <div class="front-title">defining how teams adopt intelligence</div>
+          <div class="front-hint">›</div>
         </div>
         <div class="card-back">
-          <div class="card-back-label">Personal / Skills</div>
+          <div class="back-tag">ai · leadership</div>
           <ul>
-            <li>Storytelling and connecting with people fast</li>
-            <li>Knowing when to push and when to listen</li>
-            <li>Making complex things feel simple</li>
+            <li>shaped AI strategy before it was mainstream</li>
+            <li>helped teams move from curious to capable</li>
+            <li>cut through hype to what actually ships value</li>
           </ul>
         </div>
       </div>
     </div>
 
-    <!-- ROW: Technology -->
-    <div class="row-label">Technology</div>
+    <!-- Row 3: technology -->
+    <div class="row-header" data-row="technology">technology</div>
 
-    <div class="card" data-col="running">
+    <div class="card" data-col="work" data-row="technology">
       <div class="card-inner">
         <div class="card-front">
-          <div class="card-front-row">Technology</div>
-          <div class="card-front-title">Data-Driven Miles</div>
-          <div class="card-front-hint">flip ↗</div>
+          <div class="front-tag">work · technology</div>
+          <div class="front-title">the tools of modern enterprise</div>
+          <div class="front-hint">›</div>
         </div>
         <div class="card-back">
-          <div class="card-back-label">Running / Technology</div>
+          <div class="back-tag">work · technology</div>
           <ul>
-            <li>Strava, GPS watches, heart rate zones</li>
-            <li>Training load analytics and trend tracking</li>
-            <li>Using data to train smarter, not just harder</li>
+            <li>deep in crm, saas, and enterprise integration layers</li>
+            <li>comfortable owning technical conversations with buyers</li>
+            <li>building full-stack: idea to deployed, end to end</li>
           </ul>
         </div>
       </div>
     </div>
 
-    <div class="card" data-col="work">
+    <div class="card" data-col="run" data-row="technology">
       <div class="card-inner">
         <div class="card-front">
-          <div class="card-front-row">Technology</div>
-          <div class="card-front-title">The Stack I Live In</div>
-          <div class="card-front-hint">flip ↗</div>
+          <div class="front-tag">running · technology</div>
+          <div class="front-title">data-driven miles</div>
+          <div class="front-hint">›</div>
         </div>
         <div class="card-back">
-          <div class="card-back-label">Work / Technology</div>
+          <div class="back-tag">running · technology</div>
           <ul>
-            <li>LLMs, AI agents, and RAG pipelines</li>
-            <li>Supabase, Vercel, Node.js, REST APIs</li>
-            <li>Automating things that shouldn't need humans</li>
+            <li>strava, gps watches, heart rate zones</li>
+            <li>training load analytics and trend tracking</li>
+            <li>using data to train smarter, not just harder</li>
           </ul>
         </div>
       </div>
     </div>
 
-    <div class="card" data-col="personal">
+    <div class="card" data-col="ai" data-row="technology">
       <div class="card-inner">
         <div class="card-front">
-          <div class="card-front-row">Technology</div>
-          <div class="card-front-title">Perpetually Curious</div>
-          <div class="card-front-hint">flip ↗</div>
+          <div class="front-tag">ai · technology</div>
+          <div class="front-title">the stack i live in</div>
+          <div class="front-hint">›</div>
         </div>
         <div class="card-back">
-          <div class="card-back-label">Personal / Technology</div>
+          <div class="back-tag">ai · technology</div>
           <ul>
-            <li>Early adopter of anything that saves time</li>
-            <li>Productivity systems and automation at home</li>
-            <li>Building tools I actually want to use</li>
+            <li>llms, rag pipelines, and autonomous agents</li>
+            <li>supabase, vercel, node.js, rest apis</li>
+            <li>automating the things that shouldn't need humans</li>
           </ul>
         </div>
       </div>
     </div>
 
-    <!-- ROW: Interests -->
-    <div class="row-label">Interests</div>
+    <!-- Row 4: accomplishments -->
+    <div class="row-header" data-row="accomplishments">accomplishments</div>
 
-    <div class="card" data-col="running">
+    <div class="card" data-col="work" data-row="accomplishments">
       <div class="card-inner">
         <div class="card-front">
-          <div class="card-front-row">Interests</div>
-          <div class="card-front-title">New Courses, New Goals</div>
-          <div class="card-front-hint">flip ↗</div>
+          <div class="front-tag">work · accomplishments</div>
+          <div class="front-title">deals closed, teams moved, things shipped</div>
+          <div class="front-hint">›</div>
         </div>
         <div class="card-back">
-          <div class="card-back-label">Running / Interests</div>
+          <div class="back-tag">work · accomplishments</div>
           <ul>
-            <li>Trail running and road races</li>
-            <li>Finding new routes and exploring on foot</li>
-            <li>Chasing personal bests one block at a time</li>
+            <li>multi-million dollar enterprise deal cycles won</li>
+            <li>built and launched AI-powered commercial tools</li>
+            <li>gone from zero technical background to shipping product</li>
           </ul>
         </div>
       </div>
     </div>
 
-    <div class="card" data-col="work">
+    <div class="card" data-col="run" data-row="accomplishments">
       <div class="card-inner">
         <div class="card-front">
-          <div class="card-front-row">Interests</div>
-          <div class="card-front-title">Where AI Meets Business</div>
-          <div class="card-front-hint">flip ↗</div>
+          <div class="front-tag">running · accomplishments</div>
+          <div class="front-title">pbs, races, and the streaks that held</div>
+          <div class="front-hint">›</div>
         </div>
         <div class="card-back">
-          <div class="card-back-label">Work / Interests</div>
+          <div class="back-tag">running · accomplishments</div>
           <ul>
-            <li>AI agents that do actually useful things</li>
-            <li>Sales psychology applied to product design</li>
-            <li>What software looks like in five years</li>
+            <li>multiple marathons completed, more planned</li>
+            <li>consistent training through injury and bad weather</li>
+            <li>every pr came from the boring blocks, not the glory days</li>
           </ul>
         </div>
       </div>
     </div>
 
-    <div class="card" data-col="personal">
+    <div class="card" data-col="ai" data-row="accomplishments">
       <div class="card-inner">
         <div class="card-front">
-          <div class="card-front-row">Interests</div>
-          <div class="card-front-title">Good People, Good Conversations</div>
-          <div class="card-front-hint">flip ↗</div>
+          <div class="front-tag">ai · accomplishments</div>
+          <div class="front-title">shipped, automated, scaled</div>
+          <div class="front-hint">›</div>
         </div>
         <div class="card-back">
-          <div class="card-back-label">Personal / Interests</div>
+          <div class="back-tag">ai · accomplishments</div>
           <ul>
-            <li>Conversations that go past midnight</li>
-            <li>Learning from people who took different paths</li>
-            <li>Staying genuinely curious about the world</li>
+            <li>deployed AI products used by real people</li>
+            <li>automated workflows that saved hours per week</li>
+            <li>this site is one of them — built end to end with AI</li>
           </ul>
         </div>
       </div>
@@ -446,9 +573,102 @@
   </div><!-- /matrix -->
 
   <script>
-    document.querySelectorAll('.card').forEach(card => {
+    // ── Supabase live data ──────────────────────────────────────
+    // Public anon key — read-only, safe to expose in frontend.
+    const SUPA_URL = 'https://kfkitfhrcbaheeensyou.supabase.co';
+    const SUPA_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtma2l0ZmhyY2JhaGVlZW5zeW91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMzOTcwNDcsImV4cCI6MjA2ODk3MzA0N30._6vnfY2wqrXe001VsVSC8m5Z4A3e2RWESjw8dRXyRkk';
+
+    async function loadMatrixFromDB() {
+      try {
+        const res = await fetch(
+          `${SUPA_URL}/rest/v1/matrix_cells?select=col,row,display_title,display_bullets`,
+          { headers: { 'apikey': SUPA_ANON, 'Authorization': `Bearer ${SUPA_ANON}` } }
+        );
+        if (!res.ok) return; // fail silently — hardcoded fallback stays
+
+        const cells = await res.json();
+        cells.forEach(cell => {
+          if (!cell.display_title) return; // not generated yet, keep fallback
+
+          const card = document.querySelector(
+            `.card[data-col="${cell.col}"][data-row="${cell.row}"]`
+          );
+          if (!card) return;
+
+          // Update front title
+          const title = card.querySelector('.front-title');
+          if (title) title.textContent = cell.display_title;
+
+          // Update back bullets
+          const ul = card.querySelector('.card-back ul');
+          if (ul && Array.isArray(cell.display_bullets) && cell.display_bullets.length) {
+            ul.innerHTML = cell.display_bullets
+              .map(b => `<li>${b}</li>`)
+              .join('');
+          }
+        });
+      } catch {
+        // Network error — hardcoded content stays, no crash
+      }
+    }
+
+    loadMatrixFromDB();
+
+    // ── Interactions ────────────────────────────────────────────
+    const cards   = document.querySelectorAll('.card');
+    const counter = document.getElementById('counter');
+    let unlocked  = 0;
+
+    function triggerFlash(el) {
+      el.classList.remove('axis-flash');
+      void el.offsetWidth;
+      el.classList.add('axis-flash');
+    }
+
+    cards.forEach((card, i) => {
+      // stagger idle pulse
+      card.style.animationDelay = `${(i * 0.38) % 4}s`;
+
+      const col = card.dataset.col;
+      const row = card.dataset.row;
+
+      card.addEventListener('mouseenter', () => {
+        // flash col header, row header, and the hovered cell only
+        triggerFlash(document.querySelector(`.col-header[data-col="${col}"]`));
+        triggerFlash(document.querySelector(`.row-header[data-row="${row}"]`));
+        triggerFlash(card);
+      });
+
+      card.addEventListener('animationend', () => card.classList.remove('axis-flash'));
+
       card.addEventListener('click', () => {
         card.classList.toggle('flipped');
+        if (!card.classList.contains('discovered')) {
+          card.classList.add('discovered');
+          unlocked++;
+          counter.textContent = `${unlocked} / 12 unlocked`;
+          if (unlocked === 12) {
+            counter.classList.add('complete');
+            counter.textContent = '12 / 12 — fully unlocked';
+          }
+        }
+      });
+    });
+
+    document.querySelectorAll('.col-header, .row-header').forEach(el => {
+      el.addEventListener('animationend', () => el.classList.remove('axis-flash'));
+
+      el.addEventListener('mouseenter', () => {
+        const col = el.dataset.col;
+        const row = el.dataset.row;
+        if (col) {
+          // hovering a column header — flash all cards in that column
+          document.querySelectorAll(`.card[data-col="${col}"]`).forEach(triggerFlash);
+        }
+        if (row) {
+          // hovering a row header — flash all cards in that row
+          document.querySelectorAll(`.card[data-row="${row}"]`).forEach(triggerFlash);
+        }
       });
     });
   </script>
