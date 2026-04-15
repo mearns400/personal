@@ -1,964 +1,457 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>andrew mearns</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Andrew Mearns</title>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --bg:       #03080f;
-      --canvas:   #04090e;
-      --line:     #00b8e6;
-      --text:     rgba(200,220,255,0.85);
-      --dim:      rgba(120,150,200,0.45);
-      --bright:   #ddeeff;
+      --bg: #0b0c10;
+      --surface: #13141a;
+      --border: #1f2030;
+      --text: #e6e6f0;
+      --muted: #55566a;
+      --running: #22d3a0;
+      --work: #7c6ff7;
+      --personal: #f5a623;
     }
 
-    html, body {
-      height: 100%;
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
       background: var(--bg);
       color: var(--text);
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 12px;
-      overflow: hidden;
+      font-family: -apple-system, 'Inter', 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      padding: 56px 24px 80px;
     }
 
-    /* ── HEADER ── */
-    #hdr {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-      padding: 18px 36px 14px;
-      display: flex; align-items: baseline; gap: 16px;
-      background: linear-gradient(180deg, rgba(3,8,15,1) 50%, transparent);
-    }
-    .h-name {
-      font-family: 'Exo 2', sans-serif;
-      font-size: 19px; font-weight: 700;
-      letter-spacing: 0.05em; color: var(--bright);
-    }
-    .h-name em { color: var(--line); font-style: normal; }
-    .h-tag {
-      font-family: 'Exo 2', sans-serif;
-      font-size: 10px; font-weight: 300;
-      color: var(--dim); letter-spacing: 0.12em;
-    }
-    .h-nav { margin-left: auto; display: flex; gap: 18px; }
-    .h-nav a {
-      font-family: 'Exo 2', sans-serif;
-      font-size: 10px; color: var(--dim);
-      text-decoration: none; letter-spacing: 0.1em;
-      transition: color 0.2s;
-    }
-    .h-nav a:hover { color: var(--line); }
-
-    /* ── LEGEND ── */
-    #legend {
-      position: fixed; top: 60px; left: 0; right: 0; z-index: 99;
-      padding: 6px 36px;
-      display: flex; align-items: center; gap: 0;
-      background: rgba(3,8,15,0.88);
-      border-bottom: 1px solid rgba(0,180,230,0.06);
-    }
-    .lg { display: flex; align-items: center; gap: 6px; margin-right: 20px; }
-    .lg-swatch { width: 20px; height: 7px; border-radius: 1px; opacity: 0.7; }
-    .lg-swatch.company    { background: rgba(40, 80, 200, 0.9); }
-    .lg-swatch.role       { background: rgba(0, 140, 230, 0.9); }
-    .lg-swatch.enrichment { background: rgba(0, 210, 255, 0.9); }
-    .lg-swatch.personal   { background: rgba(200, 100, 20, 0.9); }
-    .lg span {
-      font-size: 8px; color: var(--dim);
-      letter-spacing: 0.1em; text-transform: lowercase;
+    /* Header */
+    header {
+      text-align: center;
+      margin-bottom: 72px;
     }
 
-    /* ── VIEWPORT ── */
-    #vp {
-      position: fixed;
-      top: 90px; left: 0; right: 0; bottom: 78px;
-      overflow: hidden;
+    header h1 {
+      font-size: clamp(2.4rem, 6vw, 4rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: #fff;
     }
 
-    /* ── CANVAS ── */
-    #canvas {
-      position: absolute; inset: 0;
-      background: var(--canvas);
+    header p {
+      margin-top: 10px;
+      font-size: 0.88rem;
+      color: var(--muted);
+      letter-spacing: 0.04em;
     }
 
-    /* ── RULER ── */
-    #ruler {
-      position: absolute; top: 0; left: 0; right: 0;
-      height: 32px;
-      overflow: hidden;
+    /* Matrix grid */
+    .matrix {
+      display: grid;
+      grid-template-columns: 110px repeat(3, 1fr);
+      gap: 10px;
+      max-width: 980px;
+      margin: 0 auto;
     }
-    .r-year {
-      position: absolute; bottom: 6px;
-      font-size: 9px; color: rgba(0,180,230,0.28);
+
+    .corner { /* empty top-left */ }
+
+    .col-header {
+      text-align: center;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 10px 12px;
+      border-radius: 8px;
+    }
+
+    .col-running  { color: var(--running);  background: rgba(34,211,160,0.07);  }
+    .col-work     { color: var(--work);     background: rgba(124,111,247,0.07); }
+    .col-personal { color: var(--personal); background: rgba(245,166,35,0.07);  }
+
+    .row-label {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 14px;
+      font-size: 0.68rem;
+      font-weight: 700;
       letter-spacing: 0.1em;
-      transform: translateX(-50%); white-space: nowrap;
-      font-family: 'Exo 2', sans-serif; font-weight: 600;
-    }
-    .r-tick {
-      position: absolute; bottom: 0;
-      width: 1px; height: 4px;
-      background: rgba(0,180,230,0.1);
+      text-transform: uppercase;
+      color: var(--muted);
     }
 
-    /* ── CENTER LINE ── */
-    #cline {
-      position: absolute; left: 0; right: 0; height: 1px;
-      background: rgba(0,184,230,0.35);
-      box-shadow: 0 0 8px rgba(0,184,230,0.2);
-      z-index: 5; pointer-events: none;
-    }
-
-    /* ── ZONE LABELS ── */
-    .zone-lbl {
-      position: absolute; left: 8px;
-      font-size: 7px; color: rgba(0,184,230,0.18);
-      letter-spacing: 0.16em; text-transform: uppercase;
-      pointer-events: none; z-index: 6;
-      font-family: 'Exo 2', sans-serif;
-    }
-
-    /* ── TODAY ── */
-    .today-line {
-      position: absolute; bottom: 0;
-      width: 1px; background: rgba(255,255,255,0.15);
-      z-index: 6; pointer-events: none;
-    }
-    .today-lbl {
-      position: absolute; top: 2px;
-      font-size: 7px; color: rgba(255,255,255,0.2);
-      transform: translateX(-50%); white-space: nowrap;
-      letter-spacing: 0.08em;
-    }
-
-    /* ── BARS ── */
-    #bars-wrap {
-      position: absolute; inset: 0;
-      pointer-events: none;
-    }
-    .bar {
-      position: absolute;
-      pointer-events: auto;
+    /* Flip cards */
+    .card {
+      perspective: 1200px;
+      height: 178px;
       cursor: pointer;
-      border-radius: 1px;
-      transition: filter 0.12s;
     }
-    .bar:hover { filter: brightness(1.8) saturate(1.3); z-index: 30 !important; }
 
-    /* Fixed layer colors — overlapping = additive opacity darkening */
-    .bar-company    { background: rgba(30, 70, 190, 0.38); }
-    .bar-role       { background: rgba(0, 130, 220, 0.42); }
-    .bar-enrichment { background: rgba(0, 205, 255, 0.52); }
-    .bar-personal   { background: rgba(190, 85, 10, 0.32); }
+    .card-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+      transform-style: preserve-3d;
+    }
 
-    /* ── HOVER INFO PANEL ── */
-    #hover-panel {
-      position: fixed; z-index: 200;
-      width: 268px;
-      padding: 16px 18px 14px;
-      background: rgba(3, 7, 16, 0.92);
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity 0.18s;
-      /* subtle left accent line instead of full border */
-      border-left: 2px solid rgba(0,184,230,0.4);
+    .card.flipped .card-inner {
+      transform: rotateY(180deg);
     }
-    #hover-panel.visible { opacity: 1; }
 
-    .hl { line-height: 1.75; word-break: break-word; }
-    .hl + .hl { margin-top: 1px; }
-    .hl-gap { margin-top: 7px; }
+    .card-front,
+    .card-back {
+      position: absolute;
+      inset: 0;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      border-radius: 12px;
+      padding: 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      transition: filter 0.2s;
+    }
 
-    .hl-title { font-size: 12px; font-weight: 500; color: var(--bright); font-family: 'Exo 2', sans-serif; }
-    .hl-sub   { font-size: 10px; color: rgba(140,170,220,0.6); font-family: 'Exo 2', sans-serif; font-weight: 300; }
-    .hl-date  { font-size: 9px;  color: rgba(0,200,240,0.7); letter-spacing: 0.06em; }
-    .hl-desc  { font-size: 9px;  color: rgba(170,195,230,0.38); line-height: 1.65; }
-    .hl-cta   { font-size: 8px;  color: rgba(0,200,240,0.38); letter-spacing: 0.1em; margin-top: 10px; }
+    .card-back {
+      transform: rotateY(180deg);
+    }
 
-    .hl-cursor {
-      display: inline-block;
-      color: rgba(0,200,240,0.7);
-      animation: blink-c 0.55s step-end infinite;
-      font-size: 11px; line-height: 1;
-      margin-left: 1px;
-    }
-    @keyframes blink-c { 0%,100%{opacity:1} 50%{opacity:0} }
+    /* Accent top border by column */
+    .card[data-col="running"]  .card-front,
+    .card[data-col="running"]  .card-back  { border-top: 2px solid var(--running);  }
+    .card[data-col="work"]     .card-front,
+    .card[data-col="work"]     .card-back  { border-top: 2px solid var(--work);     }
+    .card[data-col="personal"] .card-front,
+    .card[data-col="personal"] .card-back  { border-top: 2px solid var(--personal); }
 
-    /* ── SLIDER ── */
-    #slider-area {
-      position: fixed; bottom: 38px; left: 0; right: 0;
-      height: 40px; z-index: 90;
-      background: rgba(3,8,15,0.95);
-      border-top: 1px solid rgba(0,180,230,0.06);
-      display: flex; align-items: center;
-      padding: 0 36px; gap: 14px;
-      user-select: none;
-    }
-    #slider-range-lbl {
-      font-size: 8px; color: var(--dim);
-      letter-spacing: 0.08em; white-space: nowrap;
-      min-width: 150px;
-    }
-    #track-wrap {
-      flex: 1; position: relative; height: 20px;
-      display: flex; align-items: center;
-    }
-    #track {
-      position: absolute; left: 0; right: 0;
-      height: 2px; border-radius: 1px;
-      background: rgba(0,180,230,0.1);
-    }
-    .s-tick {
-      position: absolute; top: 0; bottom: 0;
-      width: 1px; background: rgba(0,180,230,0.15);
-      pointer-events: none;
-    }
-    .s-tick-lbl {
-      position: absolute; top: -13px;
-      font-size: 7px; color: rgba(0,180,230,0.3);
-      transform: translateX(-50%); white-space: nowrap;
-    }
-    #s-fill {
-      position: absolute; height: 2px;
-      background: rgba(0,180,230,0.3); border-radius: 1px;
-      pointer-events: none;
-    }
-    #s-fill-drag {
-      position: absolute; height: 20px; top: 50%;
-      transform: translateY(-50%);
-      cursor: grab; z-index: 1;
-    }
-    #s-fill-drag:active { cursor: grabbing; }
-    .s-handle {
-      position: absolute; top: 50%;
-      width: 12px; height: 12px;
-      transform: translate(-50%,-50%);
-      background: var(--bg);
-      border: 1.5px solid rgba(0,184,230,0.6);
-      border-radius: 50%; cursor: ew-resize; z-index: 2;
-      transition: box-shadow 0.12s, transform 0.1s;
-    }
-    .s-handle:hover, .s-handle.drag {
-      box-shadow: 0 0 10px rgba(0,184,230,0.5);
-      transform: translate(-50%,-50%) scale(1.2);
-    }
-    #s-reset {
-      font-size: 8px; color: var(--dim);
-      letter-spacing: 0.1em; cursor: pointer;
-      border: 1px solid rgba(0,180,230,0.15);
-      background: none; padding: 3px 10px;
-      border-radius: 2px; transition: all 0.14s;
-      white-space: nowrap;
-    }
-    #s-reset:hover { color: var(--line); border-color: rgba(0,184,230,0.4); }
+    .card:hover .card-inner { filter: brightness(1.06); }
 
-    /* ── CHAT PANEL ── */
-    #chat {
-      position: fixed; top: 0; right: -410px;
-      width: 390px; height: 100%;
-      background: rgba(3, 7, 16, 0.97);
-      border-left: 1px solid rgba(0,184,230,0.1);
-      backdrop-filter: blur(20px);
-      z-index: 300; display: flex; flex-direction: column;
-      transition: right 0.28s cubic-bezier(0.4,0,0.2,1);
+    /* Front */
+    .card-front-row {
+      font-size: 0.64rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 10px;
     }
-    #chat.open { right: 0; }
-    .ch-hdr {
-      padding: 18px 20px 14px;
-      border-bottom: 1px solid rgba(0,184,230,0.07);
-      display: flex; align-items: flex-start; gap: 10px;
-    }
-    .ch-ctx { flex: 1; }
-    .ch-ctx-type { font-size: 7px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--line); margin-bottom: 3px; }
-    .ch-ctx-name { font-family: 'Exo 2', sans-serif; font-size: 13px; font-weight: 600; color: var(--bright); line-height: 1.3; }
-    .ch-x { background: none; border: none; color: var(--dim); font-size: 15px; cursor: pointer; padding: 2px 4px; transition: color 0.14s; }
-    .ch-x:hover { color: var(--bright); }
-    #chat-msgs { flex: 1; overflow-y: auto; padding: 16px 20px; display: flex; flex-direction: column; gap: 12px; }
-    #chat-msgs::-webkit-scrollbar { width: 2px; }
-    #chat-msgs::-webkit-scrollbar-thumb { background: rgba(0,184,230,0.15); }
-    .msg { display: flex; }
-    .msg.user { flex-direction: row-reverse; }
-    .msg-b { padding: 9px 13px; border-radius: 3px; font-size: 11px; line-height: 1.6; max-width: 88%; }
-    .msg.assistant .msg-b { background: rgba(0,30,70,0.5); color: var(--text); }
-    .msg.user .msg-b { background: rgba(0,184,230,0.08); border: 1px solid rgba(0,184,230,0.18); color: var(--bright); }
-    .msg.typing .msg-b { color: var(--dim); font-style: italic; }
-    #chat-foot { padding: 14px 20px; border-top: 1px solid rgba(0,184,230,0.07); display: flex; gap: 8px; }
-    #chat-inp { flex: 1; background: rgba(0,184,230,0.03); border: 1px solid rgba(0,184,230,0.15); color: var(--bright); padding: 8px 11px; font-family: 'JetBrains Mono', monospace; font-size: 11px; resize: none; border-radius: 2px; outline: none; line-height: 1.4; transition: border-color 0.14s; }
-    #chat-inp:focus { border-color: rgba(0,184,230,0.4); }
-    #chat-send { padding: 8px 14px; background: transparent; border: 1px solid rgba(0,184,230,0.25); color: var(--line); font-family: 'JetBrains Mono', monospace; font-size: 10px; cursor: pointer; border-radius: 2px; transition: all 0.13s; letter-spacing: 0.05em; }
-    #chat-send:hover { background: rgba(0,184,230,0.08); }
 
-    /* ── FOOTER ── */
-    #footer {
-      position: fixed; bottom: 0; left: 0; right: 0;
-      height: 38px; background: rgba(3,8,15,0.97);
-      border-top: 1px solid rgba(0,180,230,0.05);
-      display: flex; align-items: center; padding: 0 36px; gap: 20px; z-index: 100;
+    .card-front-title {
+      font-size: 1.05rem;
+      font-weight: 600;
+      line-height: 1.35;
+      flex: 1;
     }
-    .f-link { font-size: 9px; color: var(--dim); text-decoration: none; letter-spacing: 0.1em; transition: color 0.18s; }
-    .f-link:hover { color: var(--line); }
-    .f-copy { margin-left: auto; font-size: 9px; color: rgba(80,110,160,0.25); }
 
-    /* ── LOADING ── */
-    #loading { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 500; flex-direction: column; gap: 14px; transition: opacity 0.5s; }
-    #loading.done { opacity: 0; pointer-events: none; }
-    .ld-txt { font-family: 'Exo 2', sans-serif; font-size: 11px; color: rgba(0,184,230,0.5); letter-spacing: 0.24em; animation: pulse 1.5s ease-in-out infinite; }
-    .ld-bar { width: 120px; height: 1px; background: rgba(0,184,230,0.1); position: relative; overflow: hidden; }
-    .ld-bar::after { content:''; position:absolute; top:0; left:-50%; width:50%; height:100%; background: var(--line); animation: scan 1.2s ease-in-out infinite; }
-    @keyframes scan  { 0%{left:-50%} 100%{left:110%} }
-    @keyframes pulse { 0%,100%{opacity:.35} 50%{opacity:.7} }
+    .card-front-hint {
+      font-size: 0.61rem;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+      align-self: flex-end;
+      margin-top: 10px;
+    }
+
+    /* Back */
+    .card-back-label {
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    .card-back ul {
+      list-style: none;
+      flex: 1;
+    }
+
+    .card-back ul li {
+      font-size: 0.8rem;
+      line-height: 1.55;
+      color: rgba(230,230,240,0.82);
+      padding-left: 14px;
+      position: relative;
+      margin-bottom: 5px;
+    }
+
+    .card-back ul li::before {
+      content: "→";
+      position: absolute;
+      left: 0;
+      opacity: 0.35;
+      font-size: 0.72rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      .matrix {
+        grid-template-columns: 76px repeat(3, 1fr);
+        gap: 7px;
+      }
+      .card { height: 162px; }
+      .card-front-title { font-size: 0.9rem; }
+      .card-back ul li { font-size: 0.74rem; }
+    }
   </style>
 </head>
 <body>
 
-<div id="loading">
-  <div class="ld-txt">loading</div>
-  <div class="ld-bar"></div>
-</div>
+  <header>
+    <h1>Andrew Mearns</h1>
+    <p>Click any card to flip it</p>
+  </header>
 
-<header id="hdr">
-  <div class="h-name">andrew <em>mearns</em></div>
-  <div class="h-tag">ai engineer &nbsp;·&nbsp; charlottesville, va</div>
-  <nav class="h-nav">
-    <a href="mailto:mearns400@gmail.com">email</a>
-    <a href="https://linkedin.com/in/andrewmearns" target="_blank">linkedin</a>
-    <a href="/admin" target="_blank">admin ↗</a>
-  </nav>
-</header>
+  <div class="matrix">
 
-<div id="legend">
-  <div class="lg"><div class="lg-swatch company"></div><span>company</span></div>
-  <div class="lg"><div class="lg-swatch role"></div><span>role</span></div>
-  <div class="lg"><div class="lg-swatch enrichment"></div><span>achievement</span></div>
-  <div class="lg"><div class="lg-swatch personal"></div><span>personal</span></div>
-</div>
+    <!-- Column headers -->
+    <div class="corner"></div>
+    <div class="col-header col-running">Running</div>
+    <div class="col-header col-work">Work</div>
+    <div class="col-header col-personal">Personal</div>
 
-<div id="vp">
-  <div id="canvas">
-    <div id="ruler"></div>
-    <div id="cline"></div>
-    <div id="bars-wrap"></div>
-  </div>
-</div>
+    <!-- ROW: Leadership -->
+    <div class="row-label">Leadership</div>
 
-<div id="hover-panel"><div id="hover-content"></div></div>
-
-<!-- Slider -->
-<div id="slider-area">
-  <div id="slider-range-lbl">—</div>
-  <div id="track-wrap">
-    <div id="track">
-      <div id="s-fill"></div>
-      <div id="s-fill-drag"></div>
-      <div class="s-handle" id="h-left"></div>
-      <div class="s-handle" id="h-right"></div>
+    <div class="card" data-col="running">
+      <div class="card-inner">
+        <div class="card-front">
+          <div class="card-front-row">Leadership</div>
+          <div class="card-front-title">Setting the Pace</div>
+          <div class="card-front-hint">flip ↗</div>
+        </div>
+        <div class="card-back">
+          <div class="card-back-label">Running / Leadership</div>
+          <ul>
+            <li>Group run organiser and pacer</li>
+            <li>Holding others accountable to their goals</li>
+            <li>Racing as shared discipline</li>
+          </ul>
+        </div>
+      </div>
     </div>
-  </div>
-  <button id="s-reset">reset</button>
-</div>
 
-<!-- Chat panel -->
-<div id="chat">
-  <div class="ch-hdr">
-    <div class="ch-ctx">
-      <div class="ch-ctx-type" id="ch-type"></div>
-      <div class="ch-ctx-name" id="ch-name"></div>
+    <div class="card" data-col="work">
+      <div class="card-inner">
+        <div class="card-front">
+          <div class="card-front-row">Leadership</div>
+          <div class="card-front-title">Building What Doesn't Exist Yet</div>
+          <div class="card-front-hint">flip ↗</div>
+        </div>
+        <div class="card-back">
+          <div class="card-back-label">Work / Leadership</div>
+          <ul>
+            <li>Turning vague ideas into working systems</li>
+            <li>Bridging sales instinct and technical execution</li>
+            <li>Getting teams aligned around outcomes</li>
+          </ul>
+        </div>
+      </div>
     </div>
-    <button class="ch-x" id="ch-close">✕</button>
-  </div>
-  <div id="chat-msgs"></div>
-  <div id="chat-foot">
-    <textarea id="chat-inp" rows="2" placeholder="ask anything…"></textarea>
-    <button id="chat-send">send</button>
-  </div>
-</div>
 
-<footer id="footer">
-  <a href="mailto:mearns400@gmail.com" class="f-link">mearns400@gmail.com</a>
-  <a href="https://linkedin.com/in/andrewmearns" target="_blank" class="f-link">linkedin</a>
-  <span class="f-copy">andrew mearns</span>
-</footer>
-
-<script>
-// ── CONFIG ───────────────────────────────────────────────────────────────────
-const SB_URL = 'https://kfkitfhrcbaheeensyou.supabase.co';
-const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtma2l0ZmhyY2JhaGVlZW5zeW91Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMzOTcwNDcsImV4cCI6MjA2ODk3MzA0N30._6vnfY2wqrXe001VsVSC8m5Z4A3e2RWESjw8dRXyRkk';
-
-// Layer heights (px) — fixed per type, no stacking
-const RULER_H      = 32;
-const COMPANY_H    = 42;
-const ROLE_H       = 30;
-const ENRICHMENT_H = 18;
-const PERSONAL_H   = 42;
-const LAYER_GAP    = 5;   // gap between layers
-const LINE_PAD     = 2;   // gap between center line and first bar
-
-const MIN_SPAN = 0.015;
-
-// ── STATE ────────────────────────────────────────────────────────────────────
-let jobs = [], enrichments = [], personal = [];
-// ainfo_ tables
-let ainfoCompany = [], ainfoRole = [], ainfoAccomplishments = [], ainfoPersonal = [];
-
-let dataFirstMs, dataTodayMs, totalMs;
-let viewMin = 0, viewMax = 1;
-let chatHistory = [], chatCtx = null;
-let typeTimer = null, hoverBarId = null;
-
-// ── HELPERS ──────────────────────────────────────────────────────────────────
-const $ = id => document.getElementById(id);
-function mk(tag, cls) { const e = document.createElement(tag); if(cls) e.className=cls; return e; }
-
-function viewStartMs() { return dataFirstMs + viewMin * totalMs; }
-function viewEndMs()   { return dataFirstMs + viewMax * totalMs; }
-function vpW()         { return $('vp').clientWidth; }
-function ppd()         { return vpW() / ((viewEndMs() - viewStartMs()) / 86400000); }
-
-function toPx(d) {
-  if (!d) return -9999;
-  const ms = (d instanceof Date) ? d.getTime() : new Date(d).getTime();
-  return ((ms - viewStartMs()) / 86400000) * ppd();
-}
-
-function fmt(d) {
-  if (!d) return '?';
-  return new Date(d).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-}
-function fmtRange(s, e, cur) {
-  return fmt(s) + ' → ' + (cur ? 'present' : (e ? fmt(e) : '?'));
-}
-
-async function sfetch(table, qs='') {
-  const r = await fetch(`${SB_URL}/rest/v1/${encodeURIComponent(table)}?${qs}`, {
-    headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` }
-  });
-  if (!r.ok) throw new Error(`${table} ${r.status}`);
-  return r.json();
-}
-
-// ── LOAD ─────────────────────────────────────────────────────────────────────
-async function loadData() {
-  const [j, e, p, ac, ar, aa, ap] = await Promise.all([
-    sfetch('1a_history',           'select=*&order=start_date.asc'),
-    sfetch('1b_enrichments',       'select=*&order=start_date.asc'),
-    sfetch('1e_personal',          'select=*&order=start_date.asc'),
-    sfetch('ainfo_company',        'select=*&order=start_date.asc').catch(() => []),
-    sfetch('ainfo_role',           'select=*&order=start_date.asc').catch(() => []),
-    sfetch('ainfo_accomplishments','select=*&order=start_date.asc').catch(() => []),
-    sfetch('ainfo_personal',       'select=*&order=start_date.asc').catch(() => []),
-  ]);
-  jobs        = j.filter(r => r.start_date);
-  enrichments = e.filter(r => r.start_date);
-  personal    = p.filter(r => r.start_date);
-
-  ainfoCompany        = (Array.isArray(ac) ? ac : []).filter(r => r.start_date);
-  ainfoRole           = (Array.isArray(ar) ? ar : []).filter(r => r.start_date);
-  ainfoAccomplishments= (Array.isArray(aa) ? aa : []).filter(r => r.start_date);
-  ainfoPersonal       = (Array.isArray(ap) ? ap : []).filter(r => r.start_date);
-
-  const all = [
-    ...jobs.map(r => new Date(r.start_date).getTime()),
-    ...enrichments.map(r => new Date(r.start_date).getTime()),
-    ...personal.map(r => new Date(r.start_date).getTime()),
-    ...ainfoCompany.map(r => new Date(r.start_date).getTime()),
-    ...ainfoRole.map(r => new Date(r.start_date).getTime()),
-    ...ainfoAccomplishments.map(r => new Date(r.start_date).getTime()),
-    ...ainfoPersonal.map(r => new Date(r.start_date).getTime()),
-  ].filter(n => !isNaN(n));
-
-  dataFirstMs = all.length ? Math.min(...all) : Date.now() - 10*365*86400000;
-  dataTodayMs = Date.now();
-  totalMs = dataTodayMs - dataFirstMs;
-  viewMin = 0; viewMax = 1;
-}
-
-// ── RENDER ────────────────────────────────────────────────────────────────────
-function render() {
-  const vpH = $('vp').clientHeight;
-  // Center line sits at 50%
-  const cy = Math.round(vpH * 0.50);
-
-  $('cline').style.top = (RULER_H + cy) + 'px';
-
-  renderRuler(cy);
-  renderBars(cy);
-  updateSlider();
-}
-
-function renderRuler(cy) {
-  const ruler  = $('ruler');
-  const canvas = $('canvas');
-  ruler.innerHTML = '';
-  canvas.querySelectorAll('.r-year,.r-tick,.today-line,.zone-lbl').forEach(e=>e.remove());
-
-  const w      = vpW();
-  const vStart = viewStartMs();
-  const vEnd   = viewEndMs();
-  const pd     = ppd();
-
-  const fy = new Date(vStart).getFullYear();
-  const ly = new Date(vEnd).getFullYear();
-
-  for (let y = fy; y <= ly + 1; y++) {
-    const ms = new Date(y, 0, 1).getTime();
-    if (ms < vStart || ms > vEnd) continue;
-    const x = ((ms - vStart) / 86400000) * pd;
-    if (x < -20 || x > w + 20) continue;
-
-    const lbl = mk('div','r-year'); lbl.style.left = x+'px'; lbl.textContent = y;
-    ruler.appendChild(lbl);
-
-    if (pd >= 0.4) {
-      for (let m = 1; m < 12; m++) {
-        const mms = new Date(y, m, 1).getTime();
-        if (mms <= vStart || mms >= vEnd) continue;
-        const mx = ((mms - vStart) / 86400000) * pd;
-        if (mx < 0 || mx > w) continue;
-        const tick = mk('div','r-tick'); tick.style.left = mx+'px';
-        ruler.appendChild(tick);
-      }
-    }
-  }
-
-  // Today marker (runs from ruler bottom to canvas bottom)
-  const todayX = ((Date.now() - vStart) / 86400000) * pd;
-  if (todayX >= 0 && todayX <= w) {
-    const tl = mk('div','today-line');
-    tl.style.left = todayX + 'px';
-    tl.style.top  = RULER_H + 'px';
-    const tlbl = mk('div','today-lbl'); tlbl.textContent = 'today';
-    tl.appendChild(tlbl);
-    canvas.appendChild(tl);
-  }
-
-  // Zone labels — fixed left, indicate each layer
-  const companyTop   = RULER_H + cy - LINE_PAD - COMPANY_H;
-  const roleTop      = companyTop - LAYER_GAP - ROLE_H;
-  const enrichTop    = roleTop - LAYER_GAP - ENRICHMENT_H;
-  const personalTop  = RULER_H + cy + LINE_PAD;
-
-  function addZoneLbl(text, top, align='top') {
-    const z = mk('div','zone-lbl'); z.textContent = text;
-    z.style.top = (align==='top' ? top : top + PERSONAL_H - 10) + 'px';
-    canvas.appendChild(z);
-  }
-  addZoneLbl('enrichment', enrichTop);
-  addZoneLbl('role', roleTop);
-  addZoneLbl('company', companyTop);
-  addZoneLbl('personal', personalTop);
-}
-
-function renderBars(cy) {
-  const wrap = $('bars-wrap');
-  wrap.innerHTML = '';
-
-  const w = vpW();
-
-  // Y positions — fixed per type, no stacking
-  const companyTop   = RULER_H + cy - LINE_PAD - COMPANY_H;
-  const roleTop      = companyTop - LAYER_GAP - ROLE_H;
-  const enrichTop    = roleTop - LAYER_GAP - ENRICHMENT_H;
-  const personalTop  = RULER_H + cy + LINE_PAD;
-
-  // Each 1a_history record → company bar + role bar
-  jobs.forEach(j => {
-    const left  = toPx(j.start_date);
-    const right = j.is_current ? toPx(new Date()) : toPx(j.end_date || new Date());
-    const width = Math.max(right - left, 3);
-    if (left > w || left + width < 0) return;
-
-    // Company bar
-    addBar({ type:'company', data:j }, left, width, companyTop, COMPANY_H, wrap);
-    // Role bar
-    addBar({ type:'role',    data:j }, left, width, roleTop,    ROLE_H,    wrap);
-  });
-
-  // Enrichment bars
-  enrichments.forEach(e => {
-    const left  = toPx(e.start_date);
-    const right = toPx(e.end_date || e.start_date);
-    const width = Math.max(right - left, 6);
-    if (left > w || left + width < 0) return;
-    addBar({ type:'enrichment', data:e }, left, width, enrichTop, ENRICHMENT_H, wrap);
-  });
-
-  // Personal bars
-  personal.forEach(p => {
-    const left  = toPx(p.start_date);
-    const right = toPx(p.end_date || p.start_date);
-    const width = Math.max(right - left, 6);
-    if (left > w || left + width < 0) return;
-    addBar({ type:'personal', data:p }, left, width, personalTop, PERSONAL_H, wrap);
-  });
-
-  // ── ainfo_ bars (use per-record color, render in same layers) ────────────
-  ainfoCompany.forEach(r => {
-    const left  = toPx(r.start_date);
-    const right = toPx(r.end_date || new Date());
-    const width = Math.max(right - left, 3);
-    if (left > w || left + width < 0) return;
-    addBarColored({ type:'ainfo_company', data:r }, left, width, companyTop, COMPANY_H, wrap, r.color || '#1e46be');
-  });
-
-  ainfoRole.forEach(r => {
-    const left  = toPx(r.start_date);
-    const right = toPx(r.end_date || new Date());
-    const width = Math.max(right - left, 3);
-    if (left > w || left + width < 0) return;
-    addBarColored({ type:'ainfo_role', data:r }, left, width, roleTop, ROLE_H, wrap, r.color || '#0082dc');
-  });
-
-  ainfoAccomplishments.forEach(r => {
-    const left  = toPx(r.start_date);
-    const right = toPx(r.end_date || r.start_date);
-    const width = Math.max(right - left, 6);
-    if (left > w || left + width < 0) return;
-    addBarColored({ type:'ainfo_accomplishments', data:r }, left, width, enrichTop, ENRICHMENT_H, wrap, r.color || '#00cdff');
-  });
-
-  ainfoPersonal.forEach(r => {
-    const left  = toPx(r.start_date);
-    const right = toPx(r.end_date || r.start_date);
-    const width = Math.max(right - left, 6);
-    if (left > w || left + width < 0) return;
-    addBarColored({ type:'ainfo_personal', data:r }, left, width, personalTop, PERSONAL_H, wrap, r.color || '#c46414');
-  });
-}
-
-function addBar(b, left, width, top, h, wrap) {
-  const div = mk('div', `bar bar-${b.type}`);
-  const cl = Math.max(0, left);
-  const cw = width - (cl - left);
-  div.style.cssText = `left:${cl}px;width:${cw}px;top:${top}px;height:${h}px;z-index:${zFor(b.type)};`;
-
-  const uid = (b.data.id || '') + b.type;
-  div.addEventListener('mouseenter', ev => showHover(b, div, uid));
-  div.addEventListener('mouseleave', () => hideHover());
-  div.addEventListener('click', ev => { ev.stopPropagation(); openChat(b); });
-
-  wrap.appendChild(div);
-}
-
-function addBarColored(b, left, width, top, h, wrap, hexColor) {
-  const div = mk('div', 'bar');
-  const cl  = Math.max(0, left);
-  const cw  = width - (cl - left);
-  // Parse hex → rgba with 0.45 alpha
-  const r   = parseInt(hexColor.slice(1,3),16);
-  const g   = parseInt(hexColor.slice(3,5),16);
-  const bv  = parseInt(hexColor.slice(5,7),16);
-  div.style.cssText = `left:${cl}px;width:${cw}px;top:${top}px;height:${h}px;z-index:${zFor(b.type)};background:rgba(${r},${g},${bv},0.45);`;
-
-  const uid = (b.data.id || '') + b.type;
-  div.addEventListener('mouseenter', ev => showHover(b, div, uid));
-  div.addEventListener('mouseleave', () => hideHover());
-  div.addEventListener('click', ev => { ev.stopPropagation(); openChat(b); });
-
-  wrap.appendChild(div);
-}
-
-function zFor(t) { return t==='company'||t==='ainfo_company'?10 : t==='role'||t==='ainfo_role'?11 : t==='enrichment'||t==='ainfo_accomplishments'?12 : 10; }
-
-// ── HOVER / TYPEWRITER ────────────────────────────────────────────────────────
-function buildLines(b) {
-  const d = b.data;
-  const L = (text, cls) => ({ text, cls });
-  const lines = [];
-
-  if (b.type === 'company') {
-    lines.push(L(d.company || '—', 'hl-title'));
-    if (d.location) lines.push(L(d.location, 'hl-sub'));
-    lines.push(L(fmtRange(d.start_date, d.end_date, d.is_current), 'hl-date'));
-    const desc = d.description || '';
-    if (desc) lines.push(L(desc.slice(0,110)+(desc.length>110?'…':''), 'hl-desc hl-gap'));
-    lines.push(L('click to chat →', 'hl-cta'));
-
-  } else if (b.type === 'role') {
-    lines.push(L(d.title || '—', 'hl-title'));
-    if (d.company) lines.push(L(d.company, 'hl-sub'));
-    lines.push(L(fmtRange(d.start_date, d.end_date, d.is_current), 'hl-date'));
-    const desc = d.ai_summary || d.description || '';
-    if (desc) lines.push(L(desc.slice(0,120)+(desc.length>120?'…':''), 'hl-desc hl-gap'));
-    if (d.skills) lines.push(L(d.skills.slice(0,70), 'hl-desc'));
-    lines.push(L('click to chat →', 'hl-cta'));
-
-  } else if (b.type === 'enrichment') {
-    lines.push(L(d.accomplishment_header || '—', 'hl-title'));
-    lines.push(L(fmtRange(d.start_date, d.end_date, false), 'hl-date'));
-    const desc = d.ai_summary || d.impact_summary || d.description || '';
-    if (desc) lines.push(L(desc.slice(0,120)+(desc.length>120?'…':''), 'hl-desc hl-gap'));
-    lines.push(L('click to chat →', 'hl-cta'));
-
-  } else if (b.type === 'ainfo_company') {
-    lines.push(L(d.ai_title || d.company_name || '—', 'hl-title'));
-    if (d.company_name && d.ai_title) lines.push(L(d.company_name, 'hl-sub'));
-    lines.push(L(fmtRange(d.start_date, d.end_date, false), 'hl-date'));
-    const desc = d.ai_summary || d.description || '';
-    if (desc) lines.push(L(desc.slice(0,120)+(desc.length>120?'…':''), 'hl-desc hl-gap'));
-    lines.push(L('click to chat →', 'hl-cta'));
-
-  } else if (b.type === 'ainfo_role') {
-    lines.push(L(d.ai_title || d.title || '—', 'hl-title'));
-    if (d.title && d.ai_title) lines.push(L(d.title, 'hl-sub'));
-    lines.push(L(fmtRange(d.start_date, d.end_date, false), 'hl-date'));
-    const desc = d.ai_summary || d.responsibilities || '';
-    if (desc) lines.push(L(desc.slice(0,120)+(desc.length>120?'…':''), 'hl-desc hl-gap'));
-    lines.push(L('click to chat →', 'hl-cta'));
-
-  } else if (b.type === 'ainfo_accomplishments') {
-    lines.push(L(d.ai_title || d.description || '—', 'hl-title'));
-    lines.push(L(fmtRange(d.start_date, d.end_date, false), 'hl-date'));
-    const desc = d.ai_summary || d.description || '';
-    if (desc) lines.push(L(desc.slice(0,120)+(desc.length>120?'…':''), 'hl-desc hl-gap'));
-    lines.push(L('click to chat →', 'hl-cta'));
-
-  } else if (b.type === 'ainfo_personal') {
-    lines.push(L(d.ai_title || d.description || '—', 'hl-title'));
-    lines.push(L(fmtRange(d.start_date, d.end_date, false), 'hl-date'));
-    const desc = d.ai_summary || d.description || '';
-    if (desc) lines.push(L(desc.slice(0,120)+(desc.length>120?'…':''), 'hl-desc hl-gap'));
-    lines.push(L('click to chat →', 'hl-cta'));
-
-  } else { // personal (legacy 1e_personal)
-    lines.push(L(d.ai_header || d.description || '—', 'hl-title'));
-    if (d.type) lines.push(L(d.type, 'hl-sub'));
-    lines.push(L(fmtRange(d.start_date, d.end_date, false), 'hl-date'));
-    const desc = d.ai_summary || d.description || '';
-    if (desc) lines.push(L(desc.slice(0,120)+(desc.length>120?'…':''), 'hl-desc hl-gap'));
-    lines.push(L('click to chat →', 'hl-cta'));
-  }
-
-  return lines;
-}
-
-function showHover(b, barEl, uid) {
-  hoverBarId = uid;
-  clearInterval(typeTimer);
-
-  const panel   = $('hover-panel');
-  const content = $('hover-content');
-  content.innerHTML = '';
-
-  // Position — prefer above the bar; flip below if too close to top
-  const br  = barEl.getBoundingClientRect();
-  const ph  = 190; // estimated panel height
-  const pw  = 272;
-  let py = br.top - ph - 8;
-  let px = br.left + 2;
-  if (py < 96) py = br.bottom + 8;
-  if (px + pw > window.innerWidth - 8) px = window.innerWidth - pw - 8;
-  px = Math.max(8, px);
-  py = Math.max(96, py);
-
-  panel.style.left = px + 'px';
-  panel.style.top  = py + 'px';
-  panel.classList.add('visible');
-
-  // Build line elements (pre-create all, all start empty)
-  const lines = buildLines(b);
-  const els = lines.map(l => {
-    const el = mk('div', 'hl ' + l.cls);
-    content.appendChild(el);
-    return { el, full: l.text };
-  });
-
-  // Blinking cursor span
-  const cursor = mk('span', 'hl-cursor'); cursor.textContent = '▮';
-  if (els.length) els[0].el.appendChild(cursor);
-
-  let li = 0, ci = 0;
-
-  typeTimer = setInterval(() => {
-    if (hoverBarId !== uid) { clearInterval(typeTimer); return; }
-    if (li >= els.length)   { clearInterval(typeTimer); setTimeout(() => cursor.remove(), 800); return; }
-
-    const { el, full } = els[li];
-
-    if (ci < full.length) {
-      cursor.remove();
-      el.textContent = full.slice(0, ci + 1);
-      el.appendChild(cursor);
-      ci++;
-    } else {
-      li++; ci = 0;
-      cursor.remove();
-      if (li < els.length) els[li].el.appendChild(cursor);
-    }
-  }, 18); // ~18ms per char → snappy but readable
-}
-
-function hideHover() {
-  hoverBarId = null;
-  clearInterval(typeTimer);
-  $('hover-panel').classList.remove('visible');
-  $('hover-content').innerHTML = '';
-}
-
-// ── SLIDER ────────────────────────────────────────────────────────────────────
-function updateSlider() {
-  const track = $('track');
-  const tw = track.clientWidth;
-  const lx = viewMin * tw;
-  const rx = viewMax * tw;
-
-  $('h-left').style.left  = lx + 'px';
-  $('h-right').style.left = rx + 'px';
-  $('s-fill').style.left  = lx + 'px';
-  $('s-fill').style.width = (rx - lx) + 'px';
-  $('s-fill-drag').style.left  = lx + 'px';
-  $('s-fill-drag').style.width = (rx - lx) + 'px';
-
-  // Year ticks
-  track.querySelectorAll('.s-tick,.s-tick-lbl').forEach(e => e.remove());
-  const fy = new Date(dataFirstMs).getFullYear();
-  const ly = new Date(dataTodayMs).getFullYear();
-  for (let y = fy; y <= ly + 1; y++) {
-    const ms = new Date(y, 0, 1).getTime();
-    if (ms < dataFirstMs || ms > dataTodayMs) continue;
-    const frac = (ms - dataFirstMs) / totalMs;
-    const tx = frac * tw;
-    const t = mk('div','s-tick'); t.style.left = tx+'px'; track.appendChild(t);
-    const tl = mk('div','s-tick-lbl'); tl.style.left = tx+'px'; tl.textContent = y; track.appendChild(tl);
-  }
-
-  // Range label
-  const sf = new Date(viewStartMs()).toLocaleDateString('en-US',{month:'short',year:'numeric'});
-  const se = viewMax >= 0.999 ? 'today'
-           : new Date(viewEndMs()).toLocaleDateString('en-US',{month:'short',year:'numeric'});
-  $('slider-range-lbl').textContent = sf + ' → ' + se;
-}
-
-function initSlider() {
-  let drag = null, sx, sm, sM;
-
-  function startDrag(which, e) {
-    drag = which; sx = e.clientX; sm = viewMin; sM = viewMax;
-    $('h-left').classList.toggle('drag', which==='left');
-    $('h-right').classList.toggle('drag', which==='right');
-    e.preventDefault();
-  }
-
-  $('h-left').addEventListener('mousedown',   e => startDrag('left',  e));
-  $('h-right').addEventListener('mousedown',  e => startDrag('right', e));
-  $('s-fill-drag').addEventListener('mousedown', e => startDrag('pan', e));
-
-  window.addEventListener('mousemove', e => {
-    if (!drag) return;
-    const tw = $('track').clientWidth;
-    const dx = (e.clientX - sx) / tw;
-    if (drag === 'left') {
-      viewMin = Math.max(0, Math.min(sm + dx, viewMax - MIN_SPAN));
-    } else if (drag === 'right') {
-      viewMax = Math.max(viewMin + MIN_SPAN, Math.min(1, sM + dx));
-    } else {
-      const span = sM - sm;
-      let nm = sm + dx, nM = sM + dx;
-      if (nm < 0) { nm = 0; nM = span; }
-      if (nM > 1) { nM = 1; nm = 1 - span; }
-      viewMin = nm; viewMax = nM;
-    }
-    render();
-  });
-  window.addEventListener('mouseup', () => {
-    if (!drag) return;
-    $('h-left').classList.remove('drag'); $('h-right').classList.remove('drag');
-    drag = null;
-  });
-
-  // Touch
-  $('h-left').addEventListener('touchstart',    e=>{startDrag('left',e.touches[0]);},{passive:false});
-  $('h-right').addEventListener('touchstart',   e=>{startDrag('right',e.touches[0]);},{passive:false});
-  $('s-fill-drag').addEventListener('touchstart',e=>{startDrag('pan',e.touches[0]);},{passive:false});
-  window.addEventListener('touchmove', e=>{
-    if(!drag) return;
-    const tw=$('track').clientWidth, dx=(e.touches[0].clientX-sx)/tw;
-    if(drag==='left') viewMin=Math.max(0,Math.min(sm+dx,viewMax-MIN_SPAN));
-    else if(drag==='right') viewMax=Math.max(viewMin+MIN_SPAN,Math.min(1,sM+dx));
-    else{const sp=sM-sm;let nm=sm+dx,nM=sM+dx;if(nm<0){nm=0;nM=sp;}if(nM>1){nM=1;nm=1-sp;}viewMin=nm;viewMax=nM;}
-    render();
-  },{passive:true});
-  window.addEventListener('touchend', ()=>{ drag=null; });
-
-  $('s-reset').addEventListener('click', () => { viewMin=0; viewMax=1; render(); });
-}
-
-// ── CHAT ─────────────────────────────────────────────────────────────────────
-function openChat(b) {
-  chatHistory = []; chatCtx = b;
-  const d = b.data;
-  const typeLabel = b.type==='company'||b.type==='ainfo_company' ? 'company'
-    : b.type==='role'||b.type==='ainfo_role' ? 'work history'
-    : b.type==='enrichment'||b.type==='ainfo_accomplishments' ? 'achievement'
-    : 'personal';
-  const nameParts = [];
-  if      (b.type === 'company')              nameParts.push(d.company);
-  else if (b.type === 'role')                 { nameParts.push(d.title); if(d.company) nameParts.push('@'+d.company); }
-  else if (b.type === 'enrichment')           nameParts.push(d.accomplishment_header);
-  else if (b.type === 'ainfo_company')        nameParts.push(d.ai_title || d.company_name);
-  else if (b.type === 'ainfo_role')           nameParts.push(d.ai_title || d.title);
-  else if (b.type === 'ainfo_accomplishments')nameParts.push(d.ai_title || d.description);
-  else if (b.type === 'ainfo_personal')       nameParts.push(d.ai_title || d.description);
-  else                                        nameParts.push(d.ai_header || d.description);
-
-  $('ch-type').textContent = typeLabel;
-  $('ch-name').textContent = nameParts.filter(Boolean).join(' ');
-  $('chat-msgs').innerHTML = '';
-  addMsg('assistant', "Hey — what would you like to know?");
-  $('chat').classList.add('open');
-}
-
-function addMsg(role, text) {
-  const msgs = $('chat-msgs');
-  const wrap = mk('div',`msg ${role}`);
-  const bub  = mk('div','msg-b'); bub.textContent = text;
-  wrap.appendChild(bub); msgs.appendChild(wrap);
-  msgs.scrollTop = msgs.scrollHeight;
-  return wrap;
-}
-
-async function sendChat() {
-  const inp = $('chat-inp');
-  const msg = inp.value.trim(); if (!msg) return;
-  inp.value = ''; addMsg('user', msg);
-  chatHistory.push({ role:'user', content:msg });
-  const typing = addMsg('assistant','…'); typing.classList.add('typing');
-  try {
-    const res = await fetch('/api/chat', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ message:msg, history:chatHistory,
-        context: chatCtx ? { type:chatCtx.type, data:chatCtx.data } : null })
+    <div class="card" data-col="personal">
+      <div class="card-inner">
+        <div class="card-front">
+          <div class="card-front-row">Leadership</div>
+          <div class="card-front-title">Showing Up Consistently</div>
+          <div class="card-front-hint">flip ↗</div>
+        </div>
+        <div class="card-back">
+          <div class="card-back-label">Personal / Leadership</div>
+          <ul>
+            <li>Reliable for the people who count on me</li>
+            <li>Leading by doing, not just saying</li>
+            <li>Earning trust over time</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- ROW: Skills -->
+    <div class="row-label">Skills</div>
+
+    <div class="card" data-col="running">
+      <div class="card-inner">
+        <div class="card-front">
+          <div class="card-front-row">Skills</div>
+          <div class="card-front-title">Endurance Over Everything</div>
+          <div class="card-front-hint">flip ↗</div>
+        </div>
+        <div class="card-back">
+          <div class="card-back-label">Running / Skills</div>
+          <ul>
+            <li>Marathon training and race strategy</li>
+            <li>Recovery, nutrition, and pacing discipline</li>
+            <li>Staying consistent through bad training blocks</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-col="work">
+      <div class="card-inner">
+        <div class="card-front">
+          <div class="card-front-row">Skills</div>
+          <div class="card-front-title">Sales Brain, Engineer Hands</div>
+          <div class="card-front-hint">flip ↗</div>
+        </div>
+        <div class="card-back">
+          <div class="card-back-label">Work / Skills</div>
+          <ul>
+            <li>Enterprise sales and complex deal cycles</li>
+            <li>Prompt engineering and AI workflow design</li>
+            <li>Full-stack building: idea to deployed product</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-col="personal">
+      <div class="card-inner">
+        <div class="card-front">
+          <div class="card-front-row">Skills</div>
+          <div class="card-front-title">Reading the Room</div>
+          <div class="card-front-hint">flip ↗</div>
+        </div>
+        <div class="card-back">
+          <div class="card-back-label">Personal / Skills</div>
+          <ul>
+            <li>Storytelling and connecting with people fast</li>
+            <li>Knowing when to push and when to listen</li>
+            <li>Making complex things feel simple</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- ROW: Technology -->
+    <div class="row-label">Technology</div>
+
+    <div class="card" data-col="running">
+      <div class="card-inner">
+        <div class="card-front">
+          <div class="card-front-row">Technology</div>
+          <div class="card-front-title">Data-Driven Miles</div>
+          <div class="card-front-hint">flip ↗</div>
+        </div>
+        <div class="card-back">
+          <div class="card-back-label">Running / Technology</div>
+          <ul>
+            <li>Strava, GPS watches, heart rate zones</li>
+            <li>Training load analytics and trend tracking</li>
+            <li>Using data to train smarter, not just harder</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-col="work">
+      <div class="card-inner">
+        <div class="card-front">
+          <div class="card-front-row">Technology</div>
+          <div class="card-front-title">The Stack I Live In</div>
+          <div class="card-front-hint">flip ↗</div>
+        </div>
+        <div class="card-back">
+          <div class="card-back-label">Work / Technology</div>
+          <ul>
+            <li>LLMs, AI agents, and RAG pipelines</li>
+            <li>Supabase, Vercel, Node.js, REST APIs</li>
+            <li>Automating things that shouldn't need humans</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-col="personal">
+      <div class="card-inner">
+        <div class="card-front">
+          <div class="card-front-row">Technology</div>
+          <div class="card-front-title">Perpetually Curious</div>
+          <div class="card-front-hint">flip ↗</div>
+        </div>
+        <div class="card-back">
+          <div class="card-back-label">Personal / Technology</div>
+          <ul>
+            <li>Early adopter of anything that saves time</li>
+            <li>Productivity systems and automation at home</li>
+            <li>Building tools I actually want to use</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- ROW: Interests -->
+    <div class="row-label">Interests</div>
+
+    <div class="card" data-col="running">
+      <div class="card-inner">
+        <div class="card-front">
+          <div class="card-front-row">Interests</div>
+          <div class="card-front-title">New Courses, New Goals</div>
+          <div class="card-front-hint">flip ↗</div>
+        </div>
+        <div class="card-back">
+          <div class="card-back-label">Running / Interests</div>
+          <ul>
+            <li>Trail running and road races</li>
+            <li>Finding new routes and exploring on foot</li>
+            <li>Chasing personal bests one block at a time</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-col="work">
+      <div class="card-inner">
+        <div class="card-front">
+          <div class="card-front-row">Interests</div>
+          <div class="card-front-title">Where AI Meets Business</div>
+          <div class="card-front-hint">flip ↗</div>
+        </div>
+        <div class="card-back">
+          <div class="card-back-label">Work / Interests</div>
+          <ul>
+            <li>AI agents that do actually useful things</li>
+            <li>Sales psychology applied to product design</li>
+            <li>What software looks like in five years</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-col="personal">
+      <div class="card-inner">
+        <div class="card-front">
+          <div class="card-front-row">Interests</div>
+          <div class="card-front-title">Good People, Good Conversations</div>
+          <div class="card-front-hint">flip ↗</div>
+        </div>
+        <div class="card-back">
+          <div class="card-back-label">Personal / Interests</div>
+          <ul>
+            <li>Conversations that go past midnight</li>
+            <li>Learning from people who took different paths</li>
+            <li>Staying genuinely curious about the world</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /matrix -->
+
+  <script>
+    document.querySelectorAll('.card').forEach(card => {
+      card.addEventListener('click', () => {
+        card.classList.toggle('flipped');
+      });
     });
-    const data = await res.json(); typing.remove();
-    const reply = data.reply || data.error || 'No response.';
-    addMsg('assistant', reply); chatHistory.push({ role:'assistant', content:reply });
-  } catch(e) { typing.remove(); addMsg('assistant','Connection error.'); }
-}
+  </script>
 
-// ── EVENTS ───────────────────────────────────────────────────────────────────
-$('ch-close').addEventListener('click',  () => $('chat').classList.remove('open'));
-$('chat-send').addEventListener('click', sendChat);
-$('chat-inp').addEventListener('keydown', e => { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat();} });
-$('vp').addEventListener('click', e => { if(!e.target.closest('.bar')) hideHover(); });
-window.addEventListener('resize', render);
-
-// ── INIT ─────────────────────────────────────────────────────────────────────
-(async function init() {
-  try {
-    await loadData();
-    initSlider();
-    render();
-  } catch(err) {
-    console.error('Init error:', err);
-  } finally {
-    const loader = $('loading');
-    loader.classList.add('done');
-    setTimeout(() => loader.remove(), 600);
-  }
-})();
-</script>
 </body>
 </html>
